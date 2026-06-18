@@ -975,9 +975,17 @@ function initFirebase() {
   const raw = document.getElementById('fb-config-input').value.trim();
   let config;
   try {
-    // Accept both raw object and JSON
-    const clean = raw.replace(/(\w+):/g,'\"$1\":').replace(/'/g,'"');
-    config = JSON.parse(clean.includes('{') ? clean : `{${clean}}`);
+    // Step 1: try direct JSON parse
+    let toParse = raw;
+    // If it looks like a JS object (unquoted keys), quote them — but skip already-quoted keys and URLs
+    if (!raw.trim().startsWith('"') && raw.includes(':') && !raw.includes('"apiKey"')) {
+      toParse = raw
+        .replace(/([{,\s])(\w+)\s*:/g, '$1"$2":')  // quote unquoted keys only
+        .replace(/'/g, '"');                          // single → double quotes
+    }
+    // Wrap in braces if needed
+    if (!toParse.trim().startsWith('{')) toParse = '{' + toParse + '}';
+    config = JSON.parse(toParse);
     if (!config.databaseURL) throw new Error('Missing databaseURL');
   } catch(e) {
     toast('⚠️ Invalid Firebase config. Check format and try again.');
