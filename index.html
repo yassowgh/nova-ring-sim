@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVA Ring — Product Marketing Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- Firebase v8 compat (simpler inline script usage) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #080818; color: #e2e2f0; min-height: 100vh; }
+  h1,h2,h3,h4 { font-family: 'Space Grotesk', sans-serif; }
+
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* Cards */
+  .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; }
+  .card-bright { background: rgba(108,99,255,0.08); border: 1px solid rgba(108,99,255,0.25); border-radius: 16px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; border-radius: 12px; cursor: pointer; transition: all 0.2s; border: none; font-family: 'Inter', sans-serif; font-size: 15px; }
+  .btn-primary { background: linear-gradient(135deg, #6c63ff 0%, #a855f7 100%); color: white; padding: 12px 28px; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(108,99,255,0.45); }
+  .btn-primary:disabled { opacity: 0.45; transform: none; cursor: not-allowed; }
+  .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e2f0; padding: 12px 28px; border: 1px solid rgba(255,255,255,0.15); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.13); }
+  .btn-success { background: linear-gradient(135deg, #00c9a7, #00a67e); color: white; padding: 12px 28px; }
+  .btn-success:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,200,167,0.4); }
+  .btn-lg { padding: 16px 40px; font-size: 17px; border-radius: 14px; }
+  .btn-sm { padding: 8px 18px; font-size: 13px; border-radius: 9px; }
+
+  /* Decision option cards */
+  .opt-card { background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px 20px; cursor: pointer; transition: all 0.2s; text-align: left; width: 100%; }
+  .opt-card:hover { border-color: rgba(108,99,255,0.5); background: rgba(108,99,255,0.08); }
+  .opt-card.selected { border-color: #6c63ff; background: rgba(108,99,255,0.18); }
+  .opt-card.correct { border-color: #00c9a7; background: rgba(0,201,167,0.15); }
+  .opt-card.wrong { border-color: rgba(255,100,100,0.6); background: rgba(255,100,100,0.1); }
+
+  /* Tags/badges */
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-purple { background: rgba(108,99,255,0.25); color: #a09dff; border: 1px solid rgba(108,99,255,0.4); }
+  .badge-green { background: rgba(0,201,167,0.2); color: #00c9a7; border: 1px solid rgba(0,201,167,0.4); }
+  .badge-orange { background: rgba(255,145,0,0.2); color: #ffaa40; border: 1px solid rgba(255,145,0,0.4); }
+  .badge-red { background: rgba(255,80,80,0.2); color: #ff7070; border: 1px solid rgba(255,80,80,0.4); }
+
+  /* Progress */
+  .progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #6c63ff, #a855f7); border-radius: 99px; transition: width 0.6s ease; }
+  .progress-fill-green { background: linear-gradient(90deg, #00c9a7, #00a67e); }
+
+  /* Leaderboard */
+  .lb-row { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 10px; transition: all 0.4s; }
+  .lb-1 { background: linear-gradient(135deg,rgba(255,215,0,0.12),rgba(255,165,0,0.06)); border-color: rgba(255,200,0,0.4); }
+  .lb-2 { background: linear-gradient(135deg,rgba(192,192,192,0.12),rgba(150,150,150,0.06)); border-color: rgba(180,180,180,0.35); }
+  .lb-3 { background: linear-gradient(135deg,rgba(205,127,50,0.12),rgba(160,90,30,0.06)); border-color: rgba(200,130,50,0.35); }
+  .lb-rank { font-family: 'Space Grotesk',sans-serif; font-size: 22px; font-weight: 800; width: 36px; text-align: center; }
+
+  /* Timer */
+  .timer-display { font-family: 'Space Grotesk',sans-serif; font-size: 48px; font-weight: 700; letter-spacing: -2px; }
+  .timer-display.danger { color: #ff6060; }
+
+  /* Data table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .data-table th { text-align: left; padding: 10px 14px; background: rgba(108,99,255,0.15); color: #a09dff; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .data-table td { padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(255,255,255,0.03); }
+
+  /* Score reveal animation */
+  @keyframes countUp { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+  .score-reveal { animation: countUp 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .slide-in { animation: slideIn 0.35s ease forwards; }
+  @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.45; } }
+  .pulse { animation: pulse 1.8s ease-in-out infinite; }
+
+  /* Phase stepper */
+  .phase-step { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .phase-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; transition: all 0.3s; }
+  .phase-dot.done { background: #00c9a7; color: #080818; }
+  .phase-dot.active { background: linear-gradient(135deg,#6c63ff,#a855f7); color: white; box-shadow: 0 0 20px rgba(108,99,255,0.6); }
+  .phase-dot.pending { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
+  .phase-line { height: 2px; flex: 1; background: rgba(255,255,255,0.1); }
+  .phase-line.done { background: #00c9a7; }
+
+  /* Input styles */
+  input[type="text"], input[type="password"], textarea, select {
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+    color: #e2e2f0; font-family: 'Inter',sans-serif; font-size: 15px; padding: 12px 16px; width: 100%;
+    transition: border-color 0.2s; outline: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: #6c63ff; background: rgba(108,99,255,0.1); }
+  label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
+
+  /* Range slider */
+  input[type="range"] { -webkit-appearance: none; height: 6px; border-radius: 99px; background: rgba(255,255,255,0.15); outline: none; cursor: pointer; padding: 0; border: none; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #6c63ff; cursor: pointer; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
+
+  /* Mobile friendly phase view */
+  @media (max-width: 640px) {
+    .timer-display { font-size: 32px; }
+    .host-only-full { display: none; }
+  }
+
+  .glow-box { box-shadow: 0 0 60px rgba(108,99,255,0.25), 0 0 120px rgba(108,99,255,0.1); }
+
+  /* Notification toast */
+  #toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #1a1a3e; border: 1px solid rgba(108,99,255,0.5); color: #e2e2f0; padding: 14px 24px; border-radius: 12px; font-weight: 500; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ================================================================
+     SCREEN: WELCOME
+================================================================ -->
+<div id="screen-welcome" class="screen active" style="align-items:center;justify-content:center;padding:32px;">
+  <div style="max-width:480px;width:100%;text-align:center;">
+    <!-- Logo -->
+    <div style="margin-bottom:32px;">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#6c63ff,#a855f7);margin-bottom:16px;box-shadow:0 0 40px rgba(108,99,255,0.5);">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="14" stroke="white" stroke-width="2.5"/><circle cx="18" cy="18" r="7" fill="white" opacity="0.9"/><path d="M18 4 L18 8 M18 28 L18 32 M4 18 L8 18 M28 18 L32 18" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;">NOVA Ring Simulation</h1>
+      <p style="color:rgba(255,255,255,0.5);font-size:15px;">Product Marketing Strategy Game</p>
+    </div>
+
+    <!-- Mode selection -->
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:32px;">
+      <button class="btn btn-primary btn-lg" onclick="showScreen('screen-firebase-setup','host')" style="width:100%;">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="11" rx="2" stroke="white" stroke-width="1.8"/><path d="M7 5V4a3 3 0 016 0v1" stroke="white" stroke-width="1.8"/></svg>
+        Create Game (Facilitator)
+      </button>
+      <button class="btn btn-secondary btn-lg" onclick="showScreen('screen-team-join')" style="width:100%;">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M10 4l6 6-6 6" stroke="#e2e2f0" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Join Game (Team)
+      </button>
+    </div>
+
+    <!-- Info pills -->
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+      <span class="badge badge-purple">5 Phases · 30 min each</span>
+      <span class="badge badge-green">Real-time competition</span>
+      <span class="badge badge-orange">Up to 4 teams</span>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCREEN: FIREBASE SETUP
+================================================================ -->
+<div id="screen-firebase-setup" class="screen" style="align-items:center;justify-content:center;padding:32px;">
+  <div style="max-width:520px;width:100%;">
+    <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-welcome')" style="margin-bottom:24px;">← Back</button>
+    <div class="card" style="padding:32px;">
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:6px;">Connect Firebase</h2>
+      <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:24px;">Firebase syncs decisions & scores in real-time across all devices. Free setup takes ~5 minutes.</p>
+
+      <!-- Step guide -->
+      <div class="card-bright" style="padding:16px;margin-bottom:24px;font-size:13px;line-height:1.7;">
+        <p style="font-weight:700;color:#a09dff;margin-bottom:8px;">Quick Setup Guide:</p>
+        <ol style="padding-left:16px;color:rgba(255,255,255,0.7);">
+          <li>Go to <a href="https://console.firebase.google.com" target="_blank" style="color:#6c63ff;">console.firebase.google.com</a></li>
+          <li>Create project → skip Google Analytics</li>
+          <li>Click <strong style="color:#e2e2f0;">Realtime Database</strong> → Create → Start in test mode</li>
+          <li>Click ⚙ Project Settings → scroll to "Your apps" → Web (&lt;/&gt;)</li>
+          <li>Copy the <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:4px;">firebaseConfig</code> object and paste below</li>
+        </ol>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label>Paste your Firebase config JSON</label>
+        <textarea id="fb-config-input" rows="8" placeholder='{&#10;  "apiKey": "AIza...",&#10;  "authDomain": "your-app.firebaseapp.com",&#10;  "databaseURL": "https://your-app-default-rtdb.firebaseio.com",&#10;  "projectId": "your-app",&#10;  "storageBucket": "your-app.appspot.com",&#10;  "messagingSenderId": "123456",&#10;  "appId": "1:123..."&#10;}'></textarea>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="initFirebase()" style="flex:1;">Connect & Create Game</button>
+        <button class="btn btn-secondary" onclick="startDemoMode()" style="flex:1;">Demo Mode (No Firebase)</button>
+      </div>
+      <p style="color:rgba(255,255,255,0.35);font-size:12px;text-align:center;margin-top:12px;">Demo mode simulates up to 3 AI teams for testing. Real Firebase required for live class.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCREEN: HOST LOBBY
+================================================================ -->
+<div id="screen-host-lobby" class="screen" style="padding:32px;flex-direction:column;">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:16px;">
+    <div>
+      <h1 style="font-size:26px;font-weight:800;">Game Lobby</h1>
+      <p style="color:rgba(255,255,255,0.5);">Waiting for teams to join</p>
+    </div>
+    <button id="btn-start-game" class="btn btn-primary btn-lg" onclick="startGame()" disabled>
+      Start Game →
+    </button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;">
+    <!-- QR + Code -->
+    <div class="card" style="padding:28px;text-align:center;">
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Teams scan to join</p>
+      <div id="qr-code" style="display:inline-block;padding:16px;background:white;border-radius:12px;margin-bottom:16px;"></div>
+      <div style="background:rgba(108,99,255,0.15);border:1px solid rgba(108,99,255,0.3);border-radius:12px;padding:12px 20px;">
+        <p style="color:rgba(255,255,255,0.5);font-size:12px;margin-bottom:4px;">GAME CODE</p>
+        <p id="game-code-display" style="font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:800;letter-spacing:6px;color:#a09dff;">—</p>
+      </div>
+      <p style="color:rgba(255,255,255,0.4);font-size:12px;margin-top:10px;" id="join-url-display"></p>
+    </div>
+
+    <!-- Teams list -->
+    <div class="card" style="padding:28px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+        <h3 style="font-size:16px;font-weight:700;">Teams Joined</h3>
+        <span id="team-count-badge" class="badge badge-purple">0 teams</span>
+      </div>
+      <div id="lobby-teams-list" style="display:flex;flex-direction:column;gap:10px;">
+        <p style="color:rgba(255,255,255,0.3);font-size:14px;text-align:center;padding:24px 0;" class="pulse">Waiting for teams…</p>
+      </div>
+      <p style="color:rgba(255,255,255,0.35);font-size:12px;margin-top:16px;">Minimum 2 teams to start. Maximum 6.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCREEN: HOST GAME (PROJECTOR VIEW)
+================================================================ -->
+<div id="screen-host-game" class="screen" style="flex-direction:column;padding:28px;min-height:100vh;">
+  <!-- Top bar -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+    <!-- Phase stepper -->
+    <div style="display:flex;align-items:center;gap:6px;" id="phase-stepper"></div>
+    <!-- Timer -->
+    <div style="text-align:center;">
+      <p style="font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;">Time Left</p>
+      <div class="timer-display" id="host-timer">30:00</div>
+    </div>
+    <!-- Controls -->
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-secondary btn-sm" onclick="togglePause()">⏸ Pause</button>
+      <button class="btn btn-primary btn-sm" onclick="advancePhase()">Next Phase →</button>
+    </div>
+  </div>
+
+  <!-- Main content area -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;flex:1;">
+
+    <!-- Phase info -->
+    <div>
+      <div class="card" style="padding:28px;margin-bottom:20px;">
+        <span class="badge badge-purple" id="host-phase-badge">Phase 1 of 5</span>
+        <h2 style="font-size:28px;font-weight:800;margin-top:10px;margin-bottom:6px;" id="host-phase-name"></h2>
+        <p style="font-size:15px;color:rgba(255,255,255,0.6);" id="host-phase-subtitle"></p>
+      </div>
+      <!-- Market data table -->
+      <div class="card" style="padding:24px;" id="host-market-data-panel">
+        <h4 style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;" id="host-data-title">Market Data</h4>
+        <div id="host-market-data"></div>
+      </div>
+    </div>
+
+    <!-- Leaderboard + submissions -->
+    <div>
+      <div class="card" style="padding:20px;margin-bottom:16px;">
+        <h4 style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Live Leaderboard</h4>
+        <div id="host-leaderboard"></div>
+      </div>
+      <div class="card" style="padding:20px;">
+        <h4 style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Submissions</h4>
+        <div id="host-submissions"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCREEN: HOST RESULTS (shown after each phase)
+================================================================ -->
+<div id="screen-host-results" class="screen" style="flex-direction:column;padding:32px;">
+  <div style="max-width:900px;width:100%;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:36px;">
+      <span id="results-phase-badge" class="badge badge-green">Phase Results</span>
+      <h1 id="results-title" style="font-size:32px;font-weight:800;margin-top:10px;"></h1>
+      <p id="results-subtitle" style="color:rgba(255,255,255,0.5);font-size:15px;margin-top:6px;"></p>
+    </div>
+
+    <!-- Score cards -->
+    <div id="results-score-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px;"></div>
+
+    <!-- Learning insight -->
+    <div class="card-bright" style="padding:24px;margin-bottom:28px;" id="results-insight-panel">
+      <p style="font-size:13px;font-weight:700;color:#a09dff;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📚 Learning Insight</p>
+      <p id="results-insight-text" style="font-size:15px;line-height:1.7;color:rgba(255,255,255,0.8);"></p>
+    </div>
+
+    <!-- Full leaderboard -->
+    <div class="card" style="padding:24px;margin-bottom:28px;">
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:18px;">Running Leaderboard</h3>
+      <div id="results-leaderboard"></div>
+    </div>
+
+    <div style="text-align:center;">
+      <button class="btn btn-primary btn-lg" onclick="continueAfterResults()" id="btn-continue-results">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCREEN: TEAM JOIN
+================================================================ -->
+<div id="screen-team-join" class="screen" style="align-items:center;justify-content:center;padding:24px;">
+  <div style="max-width:400px;width:100%;">
+    <button class="btn btn-secondary btn-sm" onclick="showScreen('screen-welcome')" style="margin-bottom:24px;">← Back</button>
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#6c63ff,#a855f7);margin-bottom:14px;">
+        <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><path d="M15 5L25 10V15C25 20.5 20.5 25.5 15 27C9.5 25.5 5 20.5 5 15V10L15 5Z" stroke="white" stroke-width="2" fill="none"/></svg>
+      </div>
+      <h1 style="font-size:24px;font-weight:800;">Join the Game</h1>
+      <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-top:4px;">Enter your game code and team name</p>
+    </div>
+    <div class="card" style="padding:28px;display:flex;flex-direction:column;gap:18px;">
+      <div>
+        <label>Game Code</label>
+        <input type="text" id="join-code-input" placeholder="e.g. NOVA42" maxlength="8" style="text-align:center;font-size:24px;font-weight:700;letter-spacing:6px;text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div>
+        <label>Team Name</label>
+        <input type="text" id="join-team-input" placeholder="e.g. Alpha Squad" maxlength="20">
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="joinGame()">Join Game →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCREEN: TEAM LOBBY
+================================================================ -->
+<div id="screen-team-lobby" class="screen" style="align-items:center;justify-content:center;padding:24px;">
+  <div style="max-width:400px;width:100%;text-align:center;">
+    <div class="card" style="padding:36px;">
+      <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#00c9a7,#00a67e);display:inline-flex;align-items:center;justify-content:center;margin-bottom:18px;">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M5 13l6 6L21 7" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:6px;">You're in!</h2>
+      <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:20px;">Waiting for the facilitator to start the game</p>
+      <div class="card-bright" style="padding:14px;margin-bottom:20px;">
+        <p style="color:rgba(255,255,255,0.5);font-size:12px;">YOUR TEAM</p>
+        <p id="lobby-my-team-name" style="font-size:22px;font-weight:700;color:#a09dff;margin-top:2px;">—</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;justify-content:center;" class="pulse">
+        <div style="width:8px;height:8px;border-radius:50%;background:#00c9a7;"></div>
+        <p style="color:rgba(255,255,255,0.4);font-size:14px;">Waiting for game to start…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCREEN: TEAM PHASE (decision interface)
+================================================================ -->
+<div id="screen-team-phase" class="screen" style="flex-direction:column;padding:20px;padding-bottom:100px;">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div>
+      <span class="badge badge-purple" id="team-phase-badge">Phase 1</span>
+      <h2 style="font-size:20px;font-weight:700;margin-top:4px;" id="team-phase-name"></h2>
+    </div>
+    <div style="text-align:right;">
+      <p style="font-size:11px;color:rgba(255,255,255,0.4);">Time Left</p>
+      <p class="timer-display" id="team-timer" style="font-size:28px;">30:00</p>
+    </div>
+  </div>
+
+  <!-- Scenario brief -->
+  <div class="card" style="padding:20px;margin-bottom:20px;font-size:14px;line-height:1.75;color:rgba(255,255,255,0.8);" id="team-brief-text"></div>
+
+  <!-- Market data (collapsible on mobile) -->
+  <details class="card" style="padding:16px;margin-bottom:20px;">
+    <summary style="cursor:pointer;font-weight:600;color:#a09dff;font-size:14px;">📊 View Market Data</summary>
+    <div style="margin-top:14px;overflow-x:auto;" id="team-market-data"></div>
+  </details>
+
+  <!-- Decisions -->
+  <div id="team-decisions-container" style="display:flex;flex-direction:column;gap:22px;"></div>
+
+  <!-- Submit bar (sticky) -->
+  <div style="position:fixed;bottom:0;left:0;right:0;padding:16px 20px;background:rgba(8,8,24,0.95);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,0.08);">
+    <button class="btn btn-success" style="width:100%;" id="btn-submit-phase" onclick="submitPhase()" disabled>
+      Submit Decisions
+    </button>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCREEN: TEAM WAIT (after submitting)
+================================================================ -->
+<div id="screen-team-wait" class="screen" style="align-items:center;justify-content:center;padding:24px;">
+  <div style="max-width:380px;width:100%;text-align:center;">
+    <div class="card" style="padding:36px;">
+      <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#a855f7);display:inline-flex;align-items:center;justify-content:center;margin-bottom:18px;" class="pulse">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 6v8l5 3" stroke="white" stroke-width="2.2" stroke-linecap="round"/><circle cx="14" cy="14" r="10" stroke="white" stroke-width="2.2"/></svg>
+      </div>
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:6px;">Decisions Submitted!</h2>
+      <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:20px;">Waiting for all teams to submit and for the facilitator to reveal results.</p>
+      <div class="card-bright" style="padding:16px;">
+        <p style="font-size:13px;color:rgba(255,255,255,0.5);">Your team</p>
+        <p id="wait-team-name" style="font-size:20px;font-weight:700;color:#a09dff;margin-top:2px;"></p>
+        <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-top:8px;" id="wait-phase-info"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCREEN: TEAM RESULTS (after facilitator reveals)
+================================================================ -->
+<div id="screen-team-results" class="screen" style="flex-direction:column;padding:20px;padding-bottom:80px;">
+  <div style="text-align:center;margin-bottom:24px;">
+    <span id="team-results-badge" class="badge badge-green">Phase Complete</span>
+    <h2 style="font-size:24px;font-weight:800;margin-top:8px;" id="team-results-phase-name"></h2>
+  </div>
+
+  <!-- Score reveal -->
+  <div class="card glow-box" style="padding:28px;text-align:center;margin-bottom:20px;">
+    <p style="color:rgba(255,255,255,0.5);font-size:14px;">Your Score This Phase</p>
+    <p id="team-phase-score" style="font-family:'Space Grotesk',sans-serif;font-size:56px;font-weight:800;color:#a09dff;line-height:1.1;" class="score-reveal">—</p>
+    <p style="color:rgba(255,255,255,0.4);font-size:13px;">out of 200 points</p>
+    <div class="progress-bar" style="margin-top:12px;"><div id="team-phase-score-bar" class="progress-fill" style="width:0%;"></div></div>
+  </div>
+
+  <!-- Decision breakdown -->
+  <div class="card" style="padding:20px;margin-bottom:16px;">
+    <h4 style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Decision Breakdown</h4>
+    <div id="team-decision-breakdown"></div>
+  </div>
+
+  <!-- Learning insight -->
+  <div class="card-bright" style="padding:20px;margin-bottom:16px;">
+    <p style="font-size:12px;font-weight:700;color:#a09dff;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📚 Why This Matters</p>
+    <p id="team-insight-text" style="font-size:14px;line-height:1.7;color:rgba(255,255,255,0.8);"></p>
+  </div>
+
+  <!-- Running total -->
+  <div class="card" style="padding:20px;text-align:center;margin-bottom:20px;">
+    <p style="color:rgba(255,255,255,0.5);font-size:13px;">Running Total</p>
+    <p id="team-total-score" style="font-family:'Space Grotesk',sans-serif;font-size:38px;font-weight:800;color:white;"></p>
+  </div>
+
+  <!-- Position fixed bottom -->
+  <div style="position:fixed;bottom:0;left:0;right:0;padding:16px 20px;background:rgba(8,8,24,0.95);backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,0.08);">
+    <button class="btn btn-primary" style="width:100%;" id="btn-next-phase-team" onclick="teamReadyForNext()">Ready for Next Phase ✓</button>
+  </div>
+</div>
+
+<!-- ================================================================
+     SCREEN: FINAL RESULTS
+================================================================ -->
+<div id="screen-final-results" class="screen" style="flex-direction:column;padding:32px;align-items:center;">
+  <div style="max-width:700px;width:100%;">
+    <div style="text-align:center;margin-bottom:36px;">
+      <div style="font-size:52px;margin-bottom:10px;">🏆</div>
+      <h1 style="font-size:32px;font-weight:800;">Simulation Complete!</h1>
+      <p style="color:rgba(255,255,255,0.5);margin-top:6px;">NOVA Ring — Product Marketing Challenge</p>
+    </div>
+
+    <div id="final-leaderboard" style="margin-bottom:32px;"></div>
+
+    <!-- Strategy summary panel -->
+    <div class="card" style="padding:24px;margin-bottom:24px;">
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:14px;">🎓 Key Takeaways</h3>
+      <div id="final-takeaways" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+
+    <div style="text-align:center;">
+      <button class="btn btn-secondary" onclick="showScreen('screen-welcome')">Back to Start</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+================================================================ -->
+<script>
+'use strict';
+
+// ============================================================
+// GAME DATA — Phases, Decisions, Scoring
+// ============================================================
+
+const PHASES = [
+  {
+    id: 1,
+    name: "Market Segmentation",
+    subtitle: "Define your target customer — before your competitors do.",
+    duration: 30,
+    brief: `<strong>The Situation:</strong> Your startup NovaTech is launching the NOVA Ring — an AI-powered health ring that tracks 47 biomarkers (heart rate, SpO2, sleep stages, HRV, stress, and early anomaly detection) with clinical-grade accuracy. You have <strong>$2M total budget</strong> and 12 months to prove product-market fit before your Series A.<br><br>
+<strong>Your Mission:</strong> The health wearables market is crowded but growing fast. You cannot target everyone. Choose your primary and secondary segments wisely — your choices will define your pricing, messaging, and channels for the next 5 phases. Choose based on fit, not just size.`,
+    dataTitle: "Market Segment Analysis — NOVA Ring (2025)",
+    tableHeaders: ["Segment","Est. Size","YoY Growth","Competition","Avg WTP","Regulatory"],
+    tableRows: [
+      ["🧘 Health-conscious Millennials","18M users","22%","🔴 High","$150","None"],
+      ["🏋️ Performance Athletes","4M users","15%","🔴 Very High","$250","None"],
+      ["🩺 Chronic Condition Patients","12M users","5%","🟡 Medium","$200","⚠️ FDA adjacent"],
+      ["💻 Tech Early Adopters","6M users","35%","🟡 Medium","$180","None"],
+      ["🏢 Corporate Wellness (B2B)","50K companies","28%","🟢 Low","$8K/deal","None"]
+    ],
+    decisions: [
+      {
+        id: "primary_segment",
+        question: "Choose your PRIMARY target segment",
+        hint: "This defines your core customer and everything else downstream.",
+        required: true,
+        options: [
+          { id:"millennials", label:"Health-conscious Millennials", desc:"Large addressable market, preventive health trend. Strong app engagement, price-sensitive." },
+          { id:"athletes", label:"Performance Athletes", desc:"High WTP, deeply care about accuracy. Influential word-of-mouth, loyal community." },
+          { id:"chronic", label:"Chronic Condition Patients", desc:"Medical use case, recurring value. Needs clinical validation and healthcare partnerships." },
+          { id:"techAdopters", label:"Tech Early Adopters", desc:"Fastest growing segment, great for brand launch. Trendsetting, love AI features." },
+          { id:"corporate", label:"Corporate Wellness (B2B)", desc:"Large deal sizes, low competition. Longer sales cycle but predictable revenue." }
+        ]
+      },
+      {
+        id: "secondary_segment",
+        question: "Choose your SECONDARY segment (expansion target)",
+        hint: "Pick a complementary segment that shares channels or needs with your primary.",
+        required: true,
+        options: [
+          { id:"millennials", label:"Health-conscious Millennials", desc:"Large addressable market, preventive health trend." },
+          { id:"athletes", label:"Performance Athletes", desc:"High WTP, deeply care about accuracy." },
+          { id:"chronic", label:"Chronic Condition Patients", desc:"Medical use case, recurring value." },
+          { id:"techAdopters", label:"Tech Early Adopters", desc:"Fastest growing, great for brand amplification." },
+          { id:"corporate", label:"Corporate Wellness (B2B)", desc:"Large deal sizes, low competition." }
+        ]
+      },
+      {
+        id: "value_prop",
+        question: "What is NOVA Ring's core value proposition?",
+        hint: "This is the single idea your entire brand and messaging will anchor to.",
+        required: true,
+        options: [
+          { id:"accuracy", label:"Medical-grade accuracy", desc:"\"The most accurate health ring ever built\" — clinical-level data you can trust." },
+          { id:"design", label:"Minimalist design & lifestyle", desc:"\"Health tracking that doesn't look like health tracking\" — premium aesthetics first." },
+          { id:"comprehensive", label:"Most comprehensive tracking", desc:"\"47 biomarkers in one ring\" — no other device tracks more." },
+          { id:"ai", label:"AI intelligence & insights", desc:"\"Your personal AI health coach\" — not just data, actionable life guidance." },
+          { id:"price", label:"Best value in the category", desc:"\"Premium features, accessible price\" — democratize health intelligence." }
+        ]
+      }
+    ],
+    insight: "Segmentation is the foundation of all product marketing. The common mistake is choosing the largest segment instead of the best-fit segment. High WTP, low competition, and strategic fit matter far more than raw market size. Tech early adopters and athletes are typically the highest-leverage first markets for consumer hardware — they amplify your signal and give honest feedback."
+  },
+  {
+    id: 2,
+    name: "Pricing Strategy",
+    subtitle: "Price too low and you leave money on the table. Price too high and the market ignores you.",
+    duration: 30,
+    brief: `<strong>The Situation:</strong> Based on your segmentation, it's time to set your go-to-market price. You've received competitive intelligence:<br><br>
+<ul style="list-style:disc;padding-left:20px;margin:8px 0;">
+<li><strong>Oura Ring Gen 4:</strong> $349 hardware + $5.99/mo subscription</li>
+<li><strong>Samsung Galaxy Ring:</strong> $449 one-time, no subscription</li>
+<li><strong>Whoop 5.0:</strong> $0 hardware + $30/mo subscription (athlete-focused)</li>
+<li><strong>Apple Watch Ultra 3:</strong> $849 one-time (premium smartwatch category)</li>
+</ul><br>
+Your COGS (cost of goods) is <strong>$68 per unit</strong>. Your investors expect you to reach <strong>10,000 paying customers</strong> within 12 months.`,
+    dataTitle: "Pricing Model Comparison",
+    tableHeaders: ["Model","Revenue Predictability","Customer Barrier","LTV Potential","Best For"],
+    tableRows: [
+      ["One-time only","🔴 Low","🟢 Low","🔴 Low","Price-sensitive segments"],
+      ["Hardware + monthly sub","🟡 Medium","🟡 Medium","🟢 High","Health-engaged, data-hungry users"],
+      ["Premium bundle (hw + year sub)","🟡 Medium","🔴 High (upfront)","🟢 High","High-WTP early adopters"],
+      ["B2B per-seat annual","🟢 Very High","🟢 Low (per-seat)","🟢 Very High","Corporate wellness buyers"],
+      ["Freemium (free app, hw purchase)","🔴 Low","🟢 Lowest","🟡 Medium","Volume/awareness play"]
+    ],
+    decisions: [
+      {
+        id: "price_point",
+        question: "Set your launch price point (hardware)",
+        hint: "Consider your segment's WTP, your COGS ($68), and competitor anchoring.",
+        required: true,
+        options: [
+          { id:"p99",  label:"$99",  desc:"Aggressive entry price. Barely above COGS. Volume play — needs 20K+ units to hit revenue goals." },
+          { id:"p149", label:"$149", desc:"Accessible premium. 2.2x COGS margin. Competitive vs Oura. Broadens addressable market." },
+          { id:"p199", label:"$199", desc:"Strong mid-market position. 2.9x margin. Leaves room for subscription upsell." },
+          { id:"p249", label:"$249", desc:"Premium positioning. 3.7x margin. Signals quality, narrows audience." },
+          { id:"p299", label:"$299+",desc:"High-end positioning. 4.4x+ margin. Directly competes with Oura, needs strong differentiation." }
+        ]
+      },
+      {
+        id: "pricing_model",
+        question: "Choose your pricing model",
+        hint: "The model shapes LTV, churn, and your relationship with the customer.",
+        required: true,
+        options: [
+          { id:"one_time",   label:"One-time purchase only",       desc:"Simple, no lock-in. Good for skeptical customers. Low LTV risk." },
+          { id:"hw_sub",     label:"Hardware + subscription",      desc:"Hardware purchase + $9.99/mo for AI insights. Industry standard for rings." },
+          { id:"premium_bundle", label:"Premium bundle (hw + 1yr)", desc:"Higher upfront ($X + 12 months included). Great perceived value, high LTV." },
+          { id:"b2b_seat",   label:"B2B per-seat annual license",  desc:"Sell to companies at $X/employee/year. Predictable, scalable revenue." }
+        ]
+      },
+      {
+        id: "launch_offer",
+        question: "Choose your launch promotion strategy",
+        hint: "Launch offers set price expectations — be careful with heavy discounts.",
+        required: true,
+        options: [
+          { id:"standard",       label:"Standard price, no discount",    desc:"Protects price integrity. Signals confidence. Reduces deal-seeker acquisition." },
+          { id:"early_bird",     label:"20% early-bird for first 500",   desc:"Creates urgency. Common tactic. Risk: anchors expectation of discounts." },
+          { id:"premium_bundle", label:"Free premium bundle (accessory)", desc:"Adds value without discounting price. Protects ASP while delighting buyers." },
+          { id:"influencer",     label:"Creator codes (15% off)",         desc:"Distributes discount via influencers. Drives awareness + conversion together." }
+        ]
+      }
+    ],
+    insight: "Pricing is the most powerful and underused lever in product marketing. Three principles from behavioral economics: (1) Anchoring — your price signals category; (2) Subscription models dramatically increase LTV and defensibility; (3) Never discount the core product at launch — it's nearly impossible to reverse. Bundle value instead of cutting price. The best-performing consumer hardware brands typically launch at a price that makes early adopters feel like they're getting a fair deal, not a steal."
+  },
+  {
+    id: 3,
+    name: "Go-to-Market Channels",
+    subtitle: "The best product with the wrong channels will fail. Reach the right people, the right way.",
+    duration: 30,
+    brief: `<strong>The Situation:</strong> It's launch quarter. You have a <strong>$500K marketing budget</strong> to allocate across channels for the first 6 months. Your choices should align tightly with your target segment — different customers live in different places.<br><br>
+Allocate your budget across 5 channels (total must equal 100%). Then choose your strategic launch partner.`,
+    dataTitle: "Channel Effectiveness by Segment",
+    tableHeaders: ["Channel","Millennials","Athletes","Chronic","Tech Adopters","Corporate"],
+    tableRows: [
+      ["Performance ads (Meta/Google/TikTok)","⭐⭐⭐","⭐⭐","⭐","⭐⭐⭐","⭐"],
+      ["Influencer & creator partnerships","⭐⭐⭐","⭐⭐⭐⭐","⭐⭐","⭐⭐⭐","⭐"],
+      ["PR & earned media","⭐⭐","⭐⭐","⭐⭐⭐","⭐⭐⭐⭐","⭐⭐"],
+      ["Content & community building","⭐⭐","⭐⭐⭐⭐","⭐⭐⭐","⭐⭐⭐","⭐⭐"],
+      ["B2B / channel partnerships","⭐","⭐","⭐⭐","⭐","⭐⭐⭐⭐⭐"]
+    ],
+    decisions: [
+      {
+        id: "channel_alloc",
+        question: "Allocate your $500K marketing budget (must total 100%)",
+        hint: "Align your highest budget to channels that best reach your primary segment.",
+        required: true,
+        type: "sliders",
+        channels: [
+          { id:"perf",    label:"📱 Performance Marketing",  desc:"Paid social & search ads (Meta, Google, TikTok)" },
+          { id:"influencer", label:"🌟 Influencer & Creators", desc:"Sponsored creators, review seeding, ambassador programs" },
+          { id:"pr",      label:"📰 PR & Earned Media",       desc:"Journalists, tech press, podcast appearances, product reviews" },
+          { id:"content", label:"🏘️ Community & Content",    desc:"Blog, YouTube, Reddit, owned social, user community" },
+          { id:"biz",     label:"🤝 B2B / Partnerships",      desc:"Channel sales, corporate deals, retail partnerships" }
+        ]
+      },
+      {
+        id: "launch_partner",
+        question: "Choose your primary strategic launch partner",
+        hint: "Your partner gives you distribution, credibility, or access you can't buy alone.",
+        required: true,
+        options: [
+          { id:"amazon",      label:"Amazon + DTC only",        desc:"Maximum distribution reach. No exclusive lock-in. Best for broad consumer segments." },
+          { id:"bestbuy",     label:"Best Buy + Apple Store",    desc:"Premium retail presence. Great for tech early adopters. Demo-able in-store." },
+          { id:"peloton",     label:"Peloton / Strava partnership", desc:"Deep integration with the athlete ecosystem. Bundled offers, co-marketing." },
+          { id:"telehealth",  label:"Telehealth platform",       desc:"Reach chronic condition patients through their healthcare journey. Clinical credibility." },
+          { id:"corporate",   label:"Corporate HR platform",     desc:"Enterprise distribution via benefits providers (Aetna, Mercer, Castlight)." }
+        ]
+      }
+    ],
+    insight: "Channel selection is one of the most common go-to-market mistakes — teams copy what the biggest brand in their category does, rather than going where their specific customer actually is. Athletes live on YouTube, Strava, and training forums — not Instagram. Chronic patients live in Facebook Groups and telehealth apps. Tech adopters read The Verge and follow YouTubers. The best channel mix laser-focuses 60%+ of budget on 2 high-fit channels, not a spray-and-pray across 5."
+  },
+  {
+    id: 4,
+    name: "Market Disruption",
+    subtitle: "The market just changed. Every strategy must survive contact with reality.",
+    duration: 30,
+    brief: `<strong>BREAKING — Market Event:</strong><br><br>
+<div style="background:rgba(255,100,100,0.12);border:1px solid rgba(255,100,100,0.3);border-radius:10px;padding:16px;margin:8px 0;">
+⚡ <strong>Apple just announced Apple Ring</strong> — a fashion-forward health ring launching in Q3 at $299. Features: sleep, heart rate, SpO2. Apple Health deep integration. Initial reviews praise design but criticize accuracy gaps vs medical-grade devices. Pre-orders already at 500K units.
+</div><br>
+Apple's entry <em>validates</em> the category but also creates a powerful new competitor. How you respond now determines whether NOVA Ring survives or thrives. Two strategic decisions needed.`,
+    dataTitle: "Competitive Landscape After Apple Ring Announcement",
+    tableHeaders: ["Brand","Price","Strength","Weakness","Your Opportunity"],
+    tableRows: [
+      ["Apple Ring","$299","Brand, ecosystem, design","Basic accuracy, no subscription AI","Accuracy + AI differentiation"],
+      ["Oura Ring","$349+sub","Sleep tracking heritage","Limited health scope, aging UI","Broader tracking + modern UX"],
+      ["Whoop","$0+$30/mo","Athlete credibility","Aesthetics, mainstream appeal","Cross-segment play"],
+      ["NOVA Ring","Your price","AI + accuracy","Brand awareness","Clearly stake your claim NOW"]
+    ],
+    decisions: [
+      {
+        id: "competitive_response",
+        question: "How does NOVA Ring respond to Apple Ring's announcement?",
+        hint: "Your response strategy determines your brand positioning for the next 2 years.",
+        required: true,
+        options: [
+          { id:"differentiate",  label:"Double down on differentiation",    desc:"Launch a bold 'accuracy matters' campaign. Publish head-to-head data vs Apple Ring. Own clinical accuracy positioning." },
+          { id:"attack_price",   label:"Aggressive price cut to undercut",  desc:"Drop price to create price gap vs Apple. Race to acquire customers before Apple launches." },
+          { id:"partner",        label:"Seek an acquisition/partnership",   desc:"Proactively approach health platforms or employers about partnership deals before Apple dominates distribution." },
+          { id:"niche_down",     label:"Retreat to a defensible niche",     desc:"Fully commit to the chronic patient or athletic segment where Apple won't aggressively compete." }
+        ]
+      },
+      {
+        id: "messaging_pivot",
+        question: "How do you adjust your marketing message?",
+        hint: "In a competitive market, a clear, differentiated message is your best weapon.",
+        required: true,
+        options: [
+          { id:"precision",  label:"'Precision Over Popularity'",      desc:"Position against Apple: medical-grade accuracy vs fashion accessory. Facts-forward." },
+          { id:"ai_coach",   label:"'Your AI Health Coach'",           desc:"Shift to outcomes — not just data, but life-changing insights Apple can't match." },
+          { id:"community",  label:"'Built for Serious Trackers'",     desc:"Community-first message targeting those who outgrew Apple Watch. Insider credibility." },
+          { id:"neutral",    label:"Stay the course, don't react",     desc:"Apple's announcement changes nothing. Continue original launch strategy." }
+        ]
+      }
+    ],
+    insight: "When a giant enters your category, the worst move is panic-discounting or trying to out-Apple Apple. The best product marketers use competitive entries as a gift: they validate your market, and they always have exploitable weaknesses. Apple Ring's accuracy gap is a real technical limitation — precision instruments require years of clinical validation Apple hasn't done. Own that gap loudly. 'We don't have a trillion dollar brand. We have the most accurate ring ever built.' That's a defensible moat."
+  },
+  {
+    id: 5,
+    name: "Growth & Scale",
+    subtitle: "Your launch worked. Now decide: what does 'winning' look like at scale?",
+    duration: 30,
+    brief: `<strong>6-Month Results:</strong> Based on your decisions so far, NovaTech has reached its first milestones. You're now raising your Series A and the board wants a clear growth plan.<br><br>
+Your investors are asking: where do you invest your next $5M to maximize ARR?<br><br>
+<strong>Current metrics (simulated based on your choices):</strong><br>
+You'll see your simulated performance below. Now decide your growth vector.`,
+    dataTitle: "Strategic Growth Options — Risk vs Reward Analysis",
+    tableHeaders: ["Option","Investment","Timeline","Risk","Revenue Upside"],
+    tableRows: [
+      ["Double down on core segment","$1.5M","3-6 months","🟢 Low","2–3x existing ARR"],
+      ["Expand to secondary segment","$2M","6-9 months","🟡 Medium","3–5x ARR"],
+      ["New geography (EU/APAC)","$3M","9-18 months","🔴 High","5–10x long-term"],
+      ["Launch premium SKU","$1.5M","4-6 months","🟡 Medium","20–30% ASP uplift"],
+      ["Pivot to enterprise B2B","$2.5M","9-12 months","🟡 Medium","High LTV, slower"]
+    ],
+    decisions: [
+      {
+        id: "growth_vector",
+        question: "Where do you invest your Series A growth budget?",
+        hint: "The best growth choice builds on your established strengths and competes where you can win.",
+        required: true,
+        options: [
+          { id:"core_segment",    label:"Double down on core segment",   desc:"Go deeper with your primary customers — better retention, referral programs, product depth." },
+          { id:"secondary_exp",   label:"Expand to secondary segment",   desc:"Your second segment is warmed up. Invest in activating them with targeted campaigns." },
+          { id:"new_geo",         label:"International expansion",       desc:"Launch in one international market (UK or Singapore). Diversify revenue base." },
+          { id:"premium_sku",     label:"Launch NOVA Ring Pro",          desc:"A premium tier at $199 higher price point, targeting high-WTP customers with advanced features." },
+          { id:"b2b_pivot",       label:"Enterprise B2B pivot",          desc:"Shift primary focus to corporate wellness. More predictable, higher ACV contracts." }
+        ]
+      },
+      {
+        id: "retention_strategy",
+        question: "What's your primary retention and loyalty strategy?",
+        hint: "In subscription businesses, retention is the most important metric after initial acquisition.",
+        required: true,
+        options: [
+          { id:"product_depth",  label:"Product-led: new features monthly", desc:"Ship fast, engage daily active users with new health insights and integrations." },
+          { id:"community",      label:"Community-led: power user program",  desc:"Invest in super-user community (ambassador program, forums, exclusive access)." },
+          { id:"clinical",       label:"Clinical outcomes partnerships",     desc:"Partner with health systems to give NOVA Ring users real clinical value." },
+          { id:"b2b_bundle",     label:"Bundle into employer benefits",      desc:"Embed NOVA Ring in employee health benefits — reduces churn to near-zero." }
+        ]
+      }
+    ],
+    insight: "The biggest mistake in growth stage product marketing is abandoning what worked in search of the next big thing. Series A is about proving repeatability — can you do what you did in Phase 1, but at 10x scale and lower CAC? The teams that win here typically double down on their most profitable segment with better product and better retention, before expanding. Expansion without a retention engine is a leaky bucket."
+  }
+];
+
+// ============================================================
+// SCORING ENGINE
+// ============================================================
+
+const SCORING = {
+
+  segmentBaseScores: {
+    millennials: 70, athletes: 75, chronic: 65, techAdopters: 85, corporate: 80
+  },
+
+  valuePropFit: {
+    // [valueProp][segment] = 0-50
+    accuracy:     { millennials:30, athletes:48, chronic:50, techAdopters:35, corporate:40 },
+    design:       { millennials:45, athletes:30, chronic:15, techAdopters:40, corporate:32 },
+    comprehensive:{ millennials:40, athletes:44, chronic:38, techAdopters:44, corporate:50 },
+    ai:           { millennials:44, athletes:35, chronic:35, techAdopters:50, corporate:40 },
+    price:        { millennials:36, athletes:18, chronic:28, techAdopters:28, corporate:20 }
+  },
+
+  segmentPairBonus: {
+    // secondary segment that pairs well with primary
+    millennials:  { techAdopters:20, chronic:12, athletes:8,  corporate:4 },
+    athletes:     { techAdopters:18, millennials:14, chronic:10, corporate:6 },
+    chronic:      { corporate:18, millennials:12, techAdopters:10, athletes:8 },
+    techAdopters: { millennials:20, athletes:18, corporate:10, chronic:8 },
+    corporate:    { chronic:18, millennials:10, athletes:8, techAdopters:12 }
+  },
+
+  priceFit: {
+    // [priceId][segment] = 0-80
+    p99:  { millennials:45, athletes:20, chronic:30, techAdopters:35, corporate:15 },
+    p149: { millennials:72, athletes:48, chronic:60, techAdopters:70, corporate:40 },
+    p199: { millennials:60, athletes:75, chronic:70, techAdopters:72, corporate:55 },
+    p249: { millennials:42, athletes:80, chronic:55, techAdopters:58, corporate:65 },
+    p299: { millennials:30, athletes:70, chronic:42, techAdopters:50, corporate:58 }
+  },
+
+  modelFit: {
+    // [model][segment] = 0-80
+    one_time:      { millennials:55, athletes:60, chronic:40, techAdopters:52, corporate:25 },
+    hw_sub:        { millennials:75, athletes:65, chronic:78, techAdopters:70, corporate:55 },
+    premium_bundle:{ millennials:55, athletes:78, chronic:58, techAdopters:72, corporate:60 },
+    b2b_seat:      { millennials:20, athletes:25, chronic:45, techAdopters:25, corporate:80 }
+  },
+
+  launchOfferScores: {
+    standard:       70,
+    early_bird:     55,  // damages price integrity
+    premium_bundle: 80,
+    influencer:     65
+  },
+
+  channelIdeal: {
+    // ideal % allocation per segment: [perf, influencer, pr, content, biz]
+    millennials:  { perf:35, influencer:30, pr:15, content:15, biz:5  },
+    athletes:     { perf:20, influencer:40, pr:15, content:20, biz:5  },
+    chronic:      { perf:20, influencer:10, pr:35, content:25, biz:10 },
+    techAdopters: { perf:25, influencer:25, pr:35, content:10, biz:5  },
+    corporate:    { perf:10, influencer:10, pr:20, content:10, biz:50 }
+  },
+
+  partnerFit: {
+    amazon:    { millennials:65, athletes:55, chronic:50, techAdopters:60, corporate:30 },
+    bestbuy:   { millennials:55, athletes:50, chronic:40, techAdopters:80, corporate:35 },
+    peloton:   { millennials:50, athletes:82, chronic:40, techAdopters:60, corporate:45 },
+    telehealth:{ millennials:40, athletes:35, chronic:85, techAdopters:40, corporate:60 },
+    corporate: { millennials:25, athletes:25, chronic:55, techAdopters:30, corporate:90 }
+  },
+
+  compResponseScores: {
+    differentiate: 90, attack_price: 45, partner: 70, niche_down: 65
+  },
+  messagingScores: {
+    precision: 85, ai_coach: 80, community: 70, neutral: 40
+  },
+
+  growthVectorFit: (primarySeg, choice) => {
+    const matrix = {
+      core_segment:  { millennials:80, athletes:80, chronic:75, techAdopters:80, corporate:75 },
+      secondary_exp: { millennials:70, athletes:75, chronic:68, techAdopters:78, corporate:70 },
+      new_geo:       { millennials:55, athletes:60, chronic:50, techAdopters:65, corporate:58 },
+      premium_sku:   { millennials:60, athletes:80, chronic:55, techAdopters:75, corporate:65 },
+      b2b_pivot:     { millennials:45, athletes:50, chronic:70, techAdopters:55, corporate:90 }
+    };
+    return (matrix[choice] && matrix[choice][primarySeg]) || 60;
+  },
+
+  retentionScores: {
+    product_depth: 80, community: 75, clinical: 85, b2b_bundle: 90
+  },
+
+  scorePhase1(d) {
+    const seg = d.primary_segment;
+    const base  = (SCORING.segmentBaseScores[seg] || 60);
+    const vpFit = (SCORING.valuePropFit[d.value_prop] || {})[seg] || 0;
+    const pairBonus = ((SCORING.segmentPairBonus[seg] || {})[d.secondary_segment] || 0);
+    const raw = base + vpFit + pairBonus;  // max ~80+50+20=150
+    const total = Math.round(Math.min(200, raw * 200 / 150));
+    const breakdown = [
+      { label:"Segment opportunity",         pts: Math.round(base * 200/150),  max:107 },
+      { label:"Value prop ↔ segment fit",    pts: Math.round(vpFit * 200/150), max:67  },
+      { label:"Segment synergy bonus",       pts: Math.round(pairBonus * 200/150), max:27 }
+    ];
+    return { total, breakdown };
+  },
+
+  scorePhase2(d, prev) {
+    const seg = (prev.primary_segment) || 'techAdopters';
+    const priceScore = (SCORING.priceFit[d.price_point] || {})[seg] || 40;
+    const modelScore = (SCORING.modelFit[d.pricing_model] || {})[seg] || 40;
+    const offerScore = SCORING.launchOfferScores[d.launch_offer] || 50;
+    const raw = priceScore + modelScore + offerScore; // max 80+80+80=240
+    const total = Math.round(Math.min(200, raw * 200 / 240));
+    const breakdown = [
+      { label:"Price ↔ segment WTP fit",    pts: Math.round(priceScore*200/240), max:67 },
+      { label:"Pricing model quality",       pts: Math.round(modelScore*200/240), max:67 },
+      { label:"Launch offer effectiveness",  pts: Math.round(offerScore*200/240), max:67 }
+    ];
+    return { total, breakdown };
+  },
+
+  scorePhase3(d, prev) {
+    const seg = (prev.primary_segment) || 'techAdopters';
+    const ideal = SCORING.channelIdeal[seg] || SCORING.channelIdeal.techAdopters;
+    const alloc = d.channel_alloc || { perf:20, influencer:20, pr:20, content:20, biz:20 };
+    // Compute how well alloc matches ideal (each channel: deviation penalty)
+    let channelScore = 100;
+    ['perf','influencer','pr','content','biz'].forEach(ch => {
+      const dev = Math.abs((alloc[ch] || 0) - (ideal[ch] || 0));
+      channelScore -= dev * 0.6; // up to 100 pts
+    });
+    channelScore = Math.max(0, Math.round(channelScore));
+    const partnerScore = (SCORING.partnerFit[d.launch_partner] || {})[seg] || 40;
+    const total = Math.round(Math.min(200, channelScore + partnerScore));
+    const breakdown = [
+      { label:"Channel mix alignment to segment", pts: channelScore, max:100 },
+      { label:"Launch partner fit",               pts: Math.round(partnerScore), max:100 }
+    ];
+    return { total, breakdown };
+  },
+
+  scorePhase4(d) {
+    const resp = SCORING.compResponseScores[d.competitive_response] || 50;
+    const msg  = SCORING.messagingScores[d.messaging_pivot] || 50;
+    const total = Math.round(Math.min(200, resp + msg));
+    const breakdown = [
+      { label:"Competitive response quality", pts: resp, max:100 },
+      { label:"Messaging pivot effectiveness",pts: msg,  max:100 }
+    ];
+    return { total, breakdown };
+  },
+
+  scorePhase5(d, prev) {
+    const seg = (prev.primary_segment) || 'techAdopters';
+    const growthScore  = SCORING.growthVectorFit(seg, d.growth_vector);
+    const retentionScore = SCORING.retentionScores[d.retention_strategy] || 60;
+    const total = Math.round(Math.min(200, growthScore + retentionScore));
+    const breakdown = [
+      { label:"Growth vector strategic fit",  pts: growthScore,    max:100 },
+      { label:"Retention strategy quality",   pts: retentionScore, max:100 }
+    ];
+    return { total, breakdown };
+  },
+
+  computeScore(phaseId, decisions, allPrevDecisions) {
+    const prev = allPrevDecisions || {};
+    switch(phaseId) {
+      case 1: return SCORING.scorePhase1(decisions);
+      case 2: return SCORING.scorePhase2(decisions, prev);
+      case 3: return SCORING.scorePhase3(decisions, prev);
+      case 4: return SCORING.scorePhase4(decisions);
+      case 5: return SCORING.scorePhase5(decisions, prev);
+      default: return { total: 100, breakdown: [] };
+    }
+  }
+};
+
+// ============================================================
+// APP STATE
+// ============================================================
+const APP = {
+  mode: null,          // 'host' | 'team'
+  firebase: null,
+  db: null,
+  gameCode: null,
+  teamId: null,
+  teamName: null,
+  currentPhase: 0,
+  isDemo: false,
+  demoTeams: ['Team Alpha','Team Beta','Team Gamma'],
+  demoDecisions: {},
+  timerInterval: null,
+  timerEnd: null,
+  timerPaused: false,
+  timerPauseRemaining: null,
+  teamDecisions: {},        // local store: teamId -> { phase -> decisions }
+  teamScores: {},           // local: teamId -> { 1:score, total:score }
+  teamList: {},             // teamId -> teamName
+  submittedTeams: new Set(),
+  currentSliders: {},
+};
+
+// ============================================================
+// FIREBASE
+// ============================================================
+function initFirebase() {
+  const raw = document.getElementById('fb-config-input').value.trim();
+  let config;
+  try {
+    // Accept both raw object and JSON
+    const clean = raw.replace(/(\w+):/g,'\"$1\":').replace(/'/g,'"');
+    config = JSON.parse(clean.includes('{') ? clean : `{${clean}}`);
+    if (!config.databaseURL) throw new Error('Missing databaseURL');
+  } catch(e) {
+    toast('⚠️ Invalid Firebase config. Check format and try again.');
+    return;
+  }
+  try {
+    if (firebase.apps.length) firebase.app().delete();
+    APP.firebase = firebase.initializeApp(config);
+    APP.db = firebase.database();
+    APP.isDemo = false;
+    createGame();
+  } catch(e) {
+    toast('Firebase error: ' + e.message);
+  }
+}
+
+function startDemoMode() {
+  APP.isDemo = true;
+  APP.db = null;
+  createGame();
+}
+
+function dbSet(path, val) {
+  if (!APP.db) return;
+  return APP.db.ref(path).set(val);
+}
+function dbUpdate(path, val) {
+  if (!APP.db) return;
+  return APP.db.ref(path).update(val);
+}
+function dbOn(path, cb) {
+  if (!APP.db) return;
+  APP.db.ref(path).on('value', snap => cb(snap.val()));
+}
+function dbOff(path) {
+  if (!APP.db) return;
+  APP.db.ref(path).off();
+}
+
+// ============================================================
+// GAME CREATION & JOIN
+// ============================================================
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function createGame() {
+  APP.mode = 'host';
+  APP.gameCode = generateCode();
+  const initialState = {
+    status: 'lobby',
+    currentPhase: 0,
+    timerEnd: null,
+    createdAt: Date.now()
+  };
+  if (APP.db) {
+    dbSet(`games/${APP.gameCode}`, initialState)
+      .then(() => setupHostLobby())
+      .catch(e => toast('DB error: ' + e.message));
+  } else {
+    setupHostLobby();
+  }
+}
+
+function setupHostLobby() {
+  showScreen('screen-host-lobby');
+  document.getElementById('game-code-display').textContent = APP.gameCode;
+
+  const joinUrl = window.location.href.split('?')[0] + '?join=' + APP.gameCode;
+  document.getElementById('join-url-display').textContent = joinUrl;
+
+  // QR code
+  document.getElementById('qr-code').innerHTML = '';
+  new QRCode(document.getElementById('qr-code'), {
+    text: joinUrl, width: 160, height: 160,
+    colorDark: '#080818', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  // Listen for teams
+  if (APP.db) {
+    dbOn(`games/${APP.gameCode}/teams`, (teams) => {
+      APP.teamList = teams || {};
+      updateLobbyTeams();
+    });
+  }
+
+  // Demo mode: add dummy teams after 1s
+  if (APP.isDemo) {
+    setTimeout(() => {
+      APP.demoTeams.forEach((name, i) => {
+        const id = 'demo_' + i;
+        APP.teamList[id] = name;
+      });
+      updateLobbyTeams();
+    }, 800);
+  }
+}
+
+function updateLobbyTeams() {
+  const list = document.getElementById('lobby-teams-list');
+  const count = Object.keys(APP.teamList).length;
+  document.getElementById('team-count-badge').textContent = count + ' team' + (count!==1?'s':'');
+  document.getElementById('btn-start-game').disabled = count < 1;
+
+  if (count === 0) {
+    list.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:14px;text-align:center;padding:24px 0;" class="pulse">Waiting for teams…</p>';
+    return;
+  }
+  list.innerHTML = Object.entries(APP.teamList).map(([id, name]) =>
+    `<div class="slide-in" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.25);border-radius:10px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#00c9a7,#00a67e);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;">${name.charAt(0).toUpperCase()}</div>
+      <span style="font-weight:600;">${name}</span>
+      <span class="badge badge-green" style="margin-left:auto;">Ready</span>
+    </div>`
+  ).join('');
+}
+
+function joinGame() {
+  const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+  const name = document.getElementById('join-team-input').value.trim();
+  if (!code || code.length < 4) { toast('Enter a valid game code'); return; }
+  if (!name) { toast('Enter your team name'); return; }
+
+  APP.mode = 'team';
+  APP.gameCode = code;
+  APP.teamName = name;
+  APP.teamId = 'team_' + Date.now() + '_' + Math.random().toString(36).substr(2,4);
+
+  if (APP.db) {
+    dbSet(`games/${code}/teams/${APP.teamId}`, name)
+      .then(() => {
+        document.getElementById('lobby-my-team-name').textContent = name;
+        showScreen('screen-team-lobby');
+        listenForGameStart();
+      })
+      .catch(() => toast('Could not connect. Check game code.'));
+  } else {
+    // Demo/offline join
+    document.getElementById('lobby-my-team-name').textContent = name;
+    showScreen('screen-team-lobby');
+    listenForGameStart();
+  }
+}
+
+function listenForGameStart() {
+  if (!APP.db) return; // demo: host calls startGame() directly
+  dbOn(`games/${APP.gameCode}/status`, (status) => {
+    if (status === 'phase') {
+      APP.db.ref(`games/${APP.gameCode}/currentPhase`).once('value', snap => {
+        loadTeamPhase(snap.val());
+      });
+    }
+  });
+  dbOn(`games/${APP.gameCode}/currentPhase`, (phase) => {
+    if (phase > 0 && APP.currentPhase !== phase) {
+      APP.currentPhase = phase;
+      if (APP.mode === 'team') loadTeamPhase(phase);
+    }
+  });
+  dbOn(`games/${APP.gameCode}/resultsPhase`, (rPhase) => {
+    if (rPhase > 0 && APP.mode === 'team') {
+      showTeamResults(rPhase);
+    }
+  });
+}
+
+// ============================================================
+// GAME FLOW — HOST
+// ============================================================
+function startGame() {
+  APP.currentPhase = 1;
+  if (APP.db) {
+    dbUpdate(`games/${APP.gameCode}`, { status:'phase', currentPhase:1 });
+  }
+  loadHostPhase(1);
+}
+
+function loadHostPhase(phaseNum) {
+  APP.currentPhase = phaseNum;
+  APP.submittedTeams = new Set();
+  const phase = PHASES[phaseNum - 1];
+  showScreen('screen-host-game');
+  renderPhaseStepper(phaseNum);
+  document.getElementById('host-phase-badge').textContent = `Phase ${phaseNum} of 5`;
+  document.getElementById('host-phase-name').textContent = phase.name;
+  document.getElementById('host-phase-subtitle').textContent = phase.subtitle;
+  document.getElementById('host-data-title').textContent = phase.dataTitle;
+  document.getElementById('host-market-data').innerHTML = renderTable(phase.tableHeaders, phase.tableRows);
+  startTimer(phase.duration * 60);
+  renderHostLeaderboard();
+  renderHostSubmissions();
+
+  if (APP.db) {
+    const timerEnd = Date.now() + phase.duration * 60 * 1000;
+    dbUpdate(`games/${APP.gameCode}`, { currentPhase: phaseNum, timerEnd });
+    // Listen for submissions
+    dbOn(`games/${APP.gameCode}/submissions`, subs => {
+      if (!subs) return;
+      APP.submittedTeams = new Set();
+      Object.entries(subs).forEach(([key, val]) => {
+        if (key.endsWith('_' + phaseNum)) {
+          const teamId = key.replace('_'+phaseNum,'');
+          APP.submittedTeams.add(teamId);
+          // score it
+          scoreAndSaveTeam(teamId, phaseNum, val);
+        }
+      });
+      renderHostSubmissions();
+    });
+  }
+
+  if (APP.isDemo) {
+    // Auto-submit demo teams after random delay
+    APP.demoTeams.forEach((name, i) => {
+      const delay = 8000 + i * 4000 + Math.random() * 5000;
+      setTimeout(() => {
+        const id = 'demo_' + i;
+        submitDemoDecision(id, phaseNum);
+      }, delay);
+    });
+  }
+}
+
+function submitDemoDecision(teamId, phaseNum) {
+  const phase = PHASES[phaseNum - 1];
+  const decisions = {};
+  phase.decisions.forEach(dec => {
+    if (dec.type === 'sliders') {
+      // Random allocation
+      const channels = dec.channels.map(c => c.id);
+      let remaining = 100;
+      channels.forEach((ch, i) => {
+        if (i === channels.length - 1) { decisions[dec.id + '_' + ch] = remaining; }
+        else {
+          const val = Math.floor(Math.random() * (remaining - (channels.length-i-1)*5));
+          decisions[dec.id + '_' + ch] = val;
+          remaining -= val;
+        }
+      });
+    } else {
+      const opts = dec.options.filter(o => {
+        // exclude same as primary for secondary
+        if (dec.id === 'secondary_segment') {
+          const prev = APP.demoDecisions['demo_0'] || {};
+          return o.id !== prev.primary_segment;
+        }
+        return true;
+      });
+      decisions[dec.id] = opts[Math.floor(Math.random() * opts.length)].id;
+    }
+  });
+  if (!APP.demoDecisions[teamId]) APP.demoDecisions[teamId] = {};
+  APP.demoDecisions[teamId] = Object.assign(APP.demoDecisions[teamId], decisions);
+  APP.submittedTeams.add(teamId);
+  scoreAndSaveTeam(teamId, phaseNum, decisions);
+  renderHostSubmissions();
+}
+
+function scoreAndSaveTeam(teamId, phaseNum, rawDecisions) {
+  // Merge channel sliders
+  const decisions = {};
+  Object.entries(rawDecisions).forEach(([k,v]) => {
+    if (k.startsWith('channel_alloc_')) {
+      const ch = k.replace('channel_alloc_','');
+      if (!decisions.channel_alloc) decisions.channel_alloc = {};
+      decisions.channel_alloc[ch] = parseInt(v) || 0;
+    } else {
+      decisions[k] = v;
+    }
+  });
+
+  // Get all previous decisions for this team
+  const prevDec = {};
+  if (APP.teamDecisions[teamId]) {
+    for (let p = 1; p < phaseNum; p++) {
+      Object.assign(prevDec, APP.teamDecisions[p] || {});
+    }
+  }
+  // Also pull from phase 1 decisions for consistency scoring
+  const ph1 = (APP.teamDecisions[teamId] && APP.teamDecisions[teamId][1]) || {};
+  const allPrev = Object.assign({}, ph1, prevDec);
+
+  const result = SCORING.computeScore(phaseNum, decisions, allPrev);
+
+  if (!APP.teamDecisions[teamId]) APP.teamDecisions[teamId] = {};
+  APP.teamDecisions[teamId][phaseNum] = decisions;
+
+  if (!APP.teamScores[teamId]) APP.teamScores[teamId] = { total: 0 };
+  APP.teamScores[teamId][phaseNum] = result.total;
+  APP.teamScores[teamId].total = Object.keys(APP.teamScores[teamId])
+    .filter(k => k !== 'total').reduce((s, k) => s + APP.teamScores[teamId][k], 0);
+  APP.teamScores[teamId].breakdown = result.breakdown;
+
+  if (APP.db) {
+    dbUpdate(`games/${APP.gameCode}/scores/${teamId}`, APP.teamScores[teamId]);
+  }
+  renderHostLeaderboard();
+}
+
+function advancePhase() {
+  stopTimer();
+  if (APP.currentPhase >= 5) {
+    showFinalResults();
+    return;
+  }
+  // Show results screen first
+  showPhaseResults(APP.currentPhase);
+}
+
+function showPhaseResults(phaseNum) {
+  const phase = PHASES[phaseNum - 1];
+  showScreen('screen-host-results');
+  document.getElementById('results-phase-badge').textContent = `Phase ${phaseNum} Complete`;
+  document.getElementById('results-title').textContent = phase.name + ' — Results';
+  document.getElementById('results-subtitle').textContent = phase.subtitle;
+  document.getElementById('results-insight-text').textContent = phase.insight;
+
+  // Score cards
+  const cards = document.getElementById('results-score-cards');
+  const sorted = Object.entries(APP.teamList).map(([id, name]) => ({
+    id, name,
+    phaseScore: (APP.teamScores[id] && APP.teamScores[id][phaseNum]) || 0,
+    total: (APP.teamScores[id] && APP.teamScores[id].total) || 0
+  })).sort((a,b) => b.phaseScore - a.phaseScore);
+
+  cards.innerHTML = sorted.map((t, i) => `
+    <div class="card slide-in" style="padding:20px;text-align:center;${i===0?'border-color:gold;background:rgba(255,215,0,0.08)':''}">
+      <div style="font-size:24px;">${['🥇','🥈','🥉','4️⃣'][i]||'🎯'}</div>
+      <p style="font-weight:700;margin:6px 0;">${t.name}</p>
+      <p style="font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:800;color:#a09dff;">${t.phaseScore}</p>
+      <p style="font-size:12px;color:rgba(255,255,255,0.4);">Total: ${t.total}</p>
+    </div>
+  `).join('');
+
+  // Full leaderboard
+  renderLeaderboard('results-leaderboard');
+
+  // Notify teams to show results
+  if (APP.db) {
+    dbUpdate(`games/${APP.gameCode}`, { resultsPhase: phaseNum, status: 'results' });
+  }
+  document.getElementById('btn-continue-results').textContent =
+    phaseNum >= 5 ? 'View Final Results →' : `Start Phase ${phaseNum+1} →`;
+}
+
+function continueAfterResults() {
+  if (APP.currentPhase >= 5) {
+    showFinalResults();
+  } else {
+    loadHostPhase(APP.currentPhase + 1);
+    if (APP.db) {
+      dbUpdate(`games/${APP.gameCode}`, { status: 'phase', currentPhase: APP.currentPhase });
+    }
+  }
+}
+
+// ============================================================
+// TIMER
+// ============================================================
+function startTimer(seconds) {
+  stopTimer();
+  APP.timerEnd = Date.now() + seconds * 1000;
+  APP.timerPaused = false;
+  APP.timerInterval = setInterval(tickTimer, 500);
+}
+
+function stopTimer() {
+  if (APP.timerInterval) clearInterval(APP.timerInterval);
+  APP.timerInterval = null;
+}
+
+function togglePause() {
+  if (APP.timerPaused) {
+    APP.timerEnd = Date.now() + APP.timerPauseRemaining * 1000;
+    APP.timerPaused = false;
+  } else {
+    APP.timerPauseRemaining = Math.max(0, Math.round((APP.timerEnd - Date.now()) / 1000));
+    APP.timerPaused = true;
+  }
+}
+
+function tickTimer() {
+  if (APP.timerPaused) return;
+  const remaining = Math.max(0, Math.round((APP.timerEnd - Date.now()) / 1000));
+  const m = Math.floor(remaining / 60);
+  const s = remaining % 60;
+  const str = `${m}:${s.toString().padStart(2,'0')}`;
+  const el = document.getElementById('host-timer');
+  const tel = document.getElementById('team-timer');
+  if (el) { el.textContent = str; el.className = 'timer-display' + (remaining<60?' danger':''); }
+  if (tel) { tel.textContent = str; tel.className = 'timer-display' + (remaining<60?' danger':''); }
+  if (remaining === 0) stopTimer();
+}
+
+// ============================================================
+// TEAM PHASE VIEW
+// ============================================================
+function loadTeamPhase(phaseNum) {
+  APP.currentPhase = phaseNum;
+  APP.currentSliders = {};
+  const phase = PHASES[phaseNum - 1];
+  showScreen('screen-team-phase');
+  document.getElementById('team-phase-badge').textContent = `Phase ${phaseNum} of 5`;
+  document.getElementById('team-phase-name').textContent = phase.name;
+  document.getElementById('team-brief-text').innerHTML = phase.brief;
+  document.getElementById('team-market-data').innerHTML = renderTable(phase.tableHeaders, phase.tableRows);
+  startTimer(phase.duration * 60);
+  renderTeamDecisions(phase);
+}
+
+function renderTeamDecisions(phase) {
+  const container = document.getElementById('team-decisions-container');
+  container.innerHTML = '';
+
+  phase.decisions.forEach((dec, di) => {
+    const block = document.createElement('div');
+    block.className = 'card';
+    block.style.cssText = 'padding:20px;';
+
+    const qNum = `${di+1}/${phase.decisions.length}`;
+    if (dec.type === 'sliders') {
+      // Channel allocation
+      let html = `<p style="font-size:12px;color:rgba(255,255,255,0.4);">Decision ${qNum}</p>
+        <h4 style="font-size:16px;font-weight:700;margin:6px 0 4px;">${dec.question}</h4>
+        <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:16px;">${dec.hint}</p>
+        <div id="total-indicator" style="text-align:center;margin-bottom:12px;">
+          <span id="alloc-total-${di}" style="font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#6c63ff;">0%</span>
+          <span style="color:rgba(255,255,255,0.4);font-size:14px;"> / 100% allocated</span>
+        </div>`;
+
+      dec.channels.forEach(ch => {
+        APP.currentSliders[ch.id] = 20; // default even spread
+        html += `<div style="margin-bottom:18px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div><span style="font-weight:600;font-size:14px;">${ch.label}</span>
+            <p style="font-size:12px;color:rgba(255,255,255,0.4);margin:2px 0 0;">${ch.desc}</p></div>
+            <span id="slider-val-${ch.id}" style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#a09dff;min-width:48px;text-align:right;">20%</span>
+          </div>
+          <input type="range" min="0" max="100" value="20" style="width:100%;"
+            oninput="updateSlider('${ch.id}', this.value, ${di})">
+        </div>`;
+      });
+      block.innerHTML = html;
+      // Init allocation display
+      setTimeout(() => updateSliderTotal(di), 50);
+    } else {
+      // Single choice
+      let html = `<p style="font-size:12px;color:rgba(255,255,255,0.4);">Decision ${qNum}</p>
+        <h4 style="font-size:16px;font-weight:700;margin:6px 0 4px;">${dec.question}</h4>
+        <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:16px;">${dec.hint}</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">`;
+
+      dec.options.forEach(opt => {
+        // For secondary segment, mark same as primary as disabled
+        const isPrimary = phase.id === 1 && dec.id === 'secondary_segment';
+        html += `<button class="opt-card" data-decid="${dec.id}" data-optid="${opt.id}" onclick="selectOption(this,'${dec.id}','${opt.id}')">
+          <p style="font-weight:600;font-size:15px;margin-bottom:3px;">${opt.label}</p>
+          <p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;">${opt.desc}</p>
+        </button>`;
+      });
+      html += '</div>';
+      block.innerHTML = html;
+    }
+    container.appendChild(block);
+  });
+
+  checkSubmitReady();
+}
+
+function updateSlider(channelId, value, decIdx) {
+  APP.currentSliders[channelId] = parseInt(value);
+  const el = document.getElementById('slider-val-' + channelId);
+  if (el) el.textContent = value + '%';
+  updateSliderTotal(decIdx);
+}
+
+function updateSliderTotal(decIdx) {
+  const total = Object.values(APP.currentSliders).reduce((s,v) => s+v, 0);
+  const el = document.getElementById('alloc-total-' + decIdx);
+  if (el) {
+    el.textContent = total + '%';
+    el.style.color = total === 100 ? '#00c9a7' : total > 100 ? '#ff6060' : '#6c63ff';
+  }
+  checkSubmitReady();
+}
+
+function selectOption(btn, decId, optId) {
+  // Deselect others in same decision
+  const buttons = document.querySelectorAll(`[data-decid="${decId}"]`);
+  buttons.forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  checkSubmitReady();
+}
+
+function checkSubmitReady() {
+  const phase = PHASES[APP.currentPhase - 1];
+  let allDone = true;
+
+  phase.decisions.forEach(dec => {
+    if (!dec.required) return;
+    if (dec.type === 'sliders') {
+      const total = Object.values(APP.currentSliders).reduce((s,v)=>s+v,0);
+      if (total !== 100) allDone = false;
+    } else {
+      const selected = document.querySelector(`[data-decid="${dec.id}"].selected`);
+      if (!selected) allDone = false;
+    }
+  });
+
+  const btn = document.getElementById('btn-submit-phase');
+  if (btn) {
+    btn.disabled = !allDone;
+    btn.textContent = allDone ? '✓ Submit Decisions' : 'Complete all decisions to submit';
+  }
+}
+
+function submitPhase() {
+  const phase = PHASES[APP.currentPhase - 1];
+  const decisions = {};
+
+  phase.decisions.forEach(dec => {
+    if (dec.type === 'sliders') {
+      dec.channels.forEach(ch => {
+        decisions['channel_alloc_' + ch.id] = APP.currentSliders[ch.id] || 0;
+      });
+    } else {
+      const sel = document.querySelector(`[data-decid="${dec.id}"].selected`);
+      if (sel) decisions[dec.id] = sel.dataset.optid;
+    }
+  });
+
+  if (APP.db) {
+    dbSet(`games/${APP.gameCode}/submissions/${APP.teamId}_${APP.currentPhase}`, decisions);
+  } else {
+    // Demo/self join: score locally
+    scoreAndSaveTeam(APP.teamId, APP.currentPhase, decisions);
+  }
+
+  document.getElementById('wait-team-name').textContent = APP.teamName;
+  document.getElementById('wait-phase-info').textContent = `Phase ${APP.currentPhase} — Submitted`;
+  showScreen('screen-team-wait');
+}
+
+// ============================================================
+// TEAM RESULTS VIEW
+// ============================================================
+function showTeamResults(phaseNum) {
+  const phase = PHASES[phaseNum - 1];
+  showScreen('screen-team-results');
+  document.getElementById('team-results-badge').textContent = `Phase ${phaseNum} Complete`;
+  document.getElementById('team-results-phase-name').textContent = phase.name;
+  document.getElementById('team-insight-text').textContent = phase.insight;
+
+  const myScores = APP.teamScores[APP.teamId] || {};
+  const phaseScore = myScores[phaseNum] || 0;
+  const total = myScores.total || 0;
+  const breakdown = myScores.breakdown || [];
+
+  document.getElementById('team-phase-score').textContent = phaseScore;
+  document.getElementById('team-total-score').textContent = total + ' pts total';
+  const bar = document.getElementById('team-phase-score-bar');
+  setTimeout(() => { if(bar) bar.style.width = (phaseScore/2)+'%'; }, 100);
+
+  // Decision breakdown
+  const bdEl = document.getElementById('team-decision-breakdown');
+  if (breakdown.length) {
+    bdEl.innerHTML = breakdown.map(b => `
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+          <span style="font-size:14px;color:rgba(255,255,255,0.7);">${b.label}</span>
+          <span style="font-weight:700;color:#a09dff;">${b.pts}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${(b.pts/b.max)*100}%;"></div></div>
+      </div>
+    `).join('');
+  } else {
+    bdEl.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:14px;">Waiting for breakdown…</p>';
+  }
+
+  const nextBtn = document.getElementById('btn-next-phase-team');
+  nextBtn.textContent = phaseNum >= 5 ? '🏁 View Final Standings' : 'Ready for Next Phase ✓';
+  nextBtn.onclick = phaseNum >= 5 ? showTeamFinal : teamReadyForNext;
+}
+
+function teamReadyForNext() {
+  if (APP.currentPhase >= 5) { showTeamFinal(); return; }
+  document.getElementById('wait-team-name').textContent = APP.teamName;
+  document.getElementById('wait-phase-info').textContent = 'Waiting for next phase…';
+  showScreen('screen-team-wait');
+}
+
+function showTeamFinal() { showScreen('screen-final-results'); renderFinalResults(); }
+
+// ============================================================
+// FINAL RESULTS
+// ============================================================
+function showFinalResults() {
+  if (APP.db) {
+    dbUpdate(`games/${APP.gameCode}`, { status:'final', resultsPhase: 99 });
+  }
+  showScreen('screen-final-results');
+  renderFinalResults();
+}
+
+function renderFinalResults() {
+  renderLeaderboard('final-leaderboard', true);
+  const takeaways = [
+    "Segmentation is strategy: the teams that chose specific, high-fit segments and stayed consistent outperformed those who tried to serve everyone.",
+    "Pricing is a signal: price communicates quality. Brands that matched price to segment WTP — not just chased volume — built more defensible positions.",
+    "Channels must match customers: the biggest gains came from allocating budget to where your specific segment actually lives, not the most popular channels.",
+    "Competitive disruption rewards differentiation: when Apple entered, teams that doubled down on their unique strengths (AI accuracy, niche community) outperformed those that panicked and discounted.",
+    "Growth follows retention: the best Series A growth plans built on existing strengths rather than chasing new segments before retention was proven."
+  ];
+  document.getElementById('final-takeaways').innerHTML = takeaways.map((t,i) =>
+    `<div class="card-bright" style="padding:14px 16px;display:flex;gap:12px;align-items:flex-start;">
+      <span style="font-size:18px;">${['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣'][i]}</span>
+      <p style="font-size:14px;line-height:1.6;color:rgba(255,255,255,0.8);">${t}</p>
+    </div>`
+  ).join('');
+}
+
+// ============================================================
+// LEADERBOARD RENDERING
+// ============================================================
+function renderLeaderboard(containerId, final = false) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const teams = Object.entries(APP.teamList)
+    .map(([id, name]) => ({ id, name, scores: APP.teamScores[id] || {}, total: (APP.teamScores[id]||{}).total || 0 }))
+    .sort((a,b) => b.total - a.total);
+
+  if (!teams.length) { el.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:14px;">No scores yet</p>'; return; }
+
+  el.innerHTML = teams.map((t, i) => {
+    const rankClass = ['lb-1','lb-2','lb-3'][i] || '';
+    const rankEmoji = ['🥇','🥈','🥉'][i] || `${i+1}`;
+    const phaseBars = final ? Array.from({length:5}, (_,p) => {
+      const s = t.scores[p+1] || 0;
+      return `<div style="flex:1;"><div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:3px;">P${p+1}</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${s/2}%;"></div></div>
+        <div style="font-size:11px;font-weight:600;color:#a09dff;margin-top:2px;">${s}</div></div>`;
+    }).join('') : '';
+    return `
+    <div class="lb-row ${rankClass}">
+      <div class="lb-rank">${rankEmoji}</div>
+      <div style="flex:1;">
+        <p style="font-weight:700;font-size:16px;">${t.name}</p>
+        ${final ? `<div style="display:flex;gap:8px;margin-top:8px;">${phaseBars}</div>` : ''}
+      </div>
+      <div style="text-align:right;">
+        <p style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;color:${['gold','#c0c0c0','#cd7f32'][i]||'#e2e2f0'}">${t.total}</p>
+        <p style="font-size:12px;color:rgba(255,255,255,0.4);">/ ${APP.currentPhase * 200} pts</p>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHostLeaderboard() { renderLeaderboard('host-leaderboard'); }
+
+function renderHostSubmissions() {
+  const el = document.getElementById('host-submissions');
+  if (!el) return;
+  const total = Object.keys(APP.teamList).length;
+  const submitted = APP.submittedTeams.size;
+  el.innerHTML = `
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:14px;color:rgba(255,255,255,0.6);">Received</span>
+        <span style="font-weight:700;">${submitted} / ${total}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill progress-fill-green" style="width:${total?submitted/total*100:0}%;"></div></div>
+    </div>
+    ${Object.entries(APP.teamList).map(([id,name]) => {
+      const done = APP.submittedTeams.has(id);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="width:8px;height:8px;border-radius:50%;background:${done?'#00c9a7':'rgba(255,255,255,0.2)'};"></div>
+        <span style="font-size:14px;flex:1;">${name}</span>
+        ${done?'<span class="badge badge-green">✓ Done</span>':'<span class="badge" style="background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);">Pending</span>'}
+      </div>`;
+    }).join('')}`;
+}
+
+// ============================================================
+// PHASE STEPPER
+// ============================================================
+function renderPhaseStepper(active) {
+  const el = document.getElementById('phase-stepper');
+  if (!el) return;
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    const status = i < active ? 'done' : i === active ? 'active' : 'pending';
+    html += `<div class="phase-step">
+      <div class="phase-dot ${status}">${i < active ? '✓' : i}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,${status==='active'?'0.8':'0.3'});white-space:nowrap;">${PHASES[i-1].name.split(' ')[0]}</div>
+    </div>`;
+    if (i < 5) html += `<div class="phase-line ${i < active ? 'done' : ''}"></div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ============================================================
+// TABLE RENDERER
+// ============================================================
+function renderTable(headers, rows) {
+  return `<div style="overflow-x:auto;"><table class="data-table">
+    <thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ============================================================
+// SCREEN MANAGEMENT
+// ============================================================
+function showScreen(id, modeHint) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  if (modeHint) APP.mode = modeHint;
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg, duration=3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ============================================================
+// AUTO-JOIN VIA URL PARAM
+// ============================================================
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const joinCode = params.get('join');
+  if (joinCode) {
+    showScreen('screen-team-join');
+    const inp = document.getElementById('join-code-input');
+    if (inp) inp.value = joinCode.toUpperCase();
+  }
+})();
+
+</script>
+</body>
+</html>
