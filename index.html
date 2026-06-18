@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NOVA Ring — Product Marketing Simulation2</title>
+<title>NOVA Ring — Product Marketing Simulation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
@@ -134,7 +134,7 @@
       <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#6c63ff,#a855f7);margin-bottom:16px;box-shadow:0 0 40px rgba(108,99,255,0.5);">
         <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="14" stroke="white" stroke-width="2.5"/><circle cx="18" cy="18" r="7" fill="white" opacity="0.9"/><path d="M18 4 L18 8 M18 28 L18 32 M4 18 L8 18 M28 18 L32 18" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
-      <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;">NOVA II Ring Simulation</h1>
+      <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;">NOVA III Ring Simulation</h1>
       <p style="color:rgba(255,255,255,0.5);font-size:15px;">Product Marketing Strategy Game</p>
     </div>
 
@@ -1057,8 +1057,17 @@ function setupHostLobby() {
   showScreen('screen-host-lobby');
   document.getElementById('game-code-display').textContent = APP.gameCode;
 
-  const joinUrl = window.location.href.split('?')[0] + '?join=' + APP.gameCode;
-  document.getElementById('join-url-display').textContent = joinUrl;
+  // Encode Firebase config into the QR URL so teams auto-connect
+  let fbParam = '';
+  if (APP.firebase) {
+    try {
+      const opts = APP.firebase.options;
+      const mini = { apiKey: opts.apiKey, authDomain: opts.authDomain, databaseURL: opts.databaseURL, projectId: opts.projectId };
+      fbParam = '&fb=' + btoa(JSON.stringify(mini));
+    } catch(e) {}
+  }
+  const joinUrl = window.location.href.split('?')[0] + '?join=' + APP.gameCode + fbParam;
+  document.getElementById('join-url-display').textContent = window.location.href.split('?')[0] + '?join=' + APP.gameCode;
 
   // QR code
   document.getElementById('qr-code').innerHTML = '';
@@ -1726,6 +1735,20 @@ function toast(msg, duration=3000) {
 (function() {
   const params = new URLSearchParams(window.location.search);
   const joinCode = params.get('join');
+  const fbParam  = params.get('fb');
+
+  // Auto-init Firebase from QR code URL so teams don't need to paste config
+  if (fbParam) {
+    try {
+      const fbConfig = JSON.parse(atob(fbParam));
+      if (firebase.apps.length) firebase.app().delete();
+      APP.firebase = firebase.initializeApp(fbConfig);
+      APP.db = firebase.database();
+    } catch(e) {
+      console.warn('Auto Firebase init failed:', e);
+    }
+  }
+
   if (joinCode) {
     showScreen('screen-team-join');
     const inp = document.getElementById('join-code-input');
