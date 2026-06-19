@@ -134,7 +134,7 @@
       <div style="display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#6c63ff,#a855f7);margin-bottom:16px;box-shadow:0 0 40px rgba(108,99,255,0.5);">
         <svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="14" stroke="white" stroke-width="2.5"/><circle cx="18" cy="18" r="7" fill="white" opacity="0.9"/><path d="M18 4 L18 8 M18 28 L18 32 M4 18 L8 18 M28 18 L32 18" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
-      <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;">NOVA III Ring Simulation</h1>
+      <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;">NOVA IV Ring Simulation</h1>
       <p style="color:rgba(255,255,255,0.5);font-size:15px;">Product Marketing Strategy Game</p>
     </div>
 
@@ -500,6 +500,8 @@
 // ============================================================
 // GAME DATA — Phases, Decisions, Scoring
 // ============================================================
+// Each option carries: score (0–100) and advice (shown after phase).
+// Phase total = average option score × 2 → max 200 pts per phase.
 
 const PHASES = [
   {
@@ -507,8 +509,7 @@ const PHASES = [
     name: "Market Segmentation",
     subtitle: "Define your target customer — before your competitors do.",
     duration: 30,
-    brief: `<strong>The Situation:</strong> Your startup NovaTech is launching the NOVA Ring — an AI-powered health ring that tracks 47 biomarkers (heart rate, SpO2, sleep stages, HRV, stress, and early anomaly detection) with clinical-grade accuracy. You have <strong>$2M total budget</strong> and 12 months to prove product-market fit before your Series A.<br><br>
-<strong>Your Mission:</strong> The health wearables market is crowded but growing fast. You cannot target everyone. Choose your primary and secondary segments wisely — your choices will define your pricing, messaging, and channels for the next 5 phases. Choose based on fit, not just size.`,
+    brief: `<strong>The Situation:</strong> NovaTech is launching the NOVA Ring — an AI health ring tracking 47 biomarkers with clinical-grade accuracy. You have <strong>$2M budget</strong> and 12 months to hit product-market fit before Series A. Answer 7 strategic questions to define your market position. Every decision shapes the phases ahead.`,
     dataTitle: "Market Segment Analysis — NOVA Ring (2025)",
     tableHeaders: ["Segment","Est. Size","YoY Growth","Competition","Avg WTP","Regulatory"],
     tableRows: [
@@ -520,245 +521,578 @@ const PHASES = [
     ],
     decisions: [
       {
-        id: "primary_segment",
-        question: "Choose your PRIMARY target segment",
-        hint: "This defines your core customer and everything else downstream.",
-        required: true,
+        id: "primary_segment", question: "1. Choose your PRIMARY target segment",
+        hint: "This defines your core customer and drives every downstream decision.", required: true,
         options: [
-          { id:"millennials", label:"Health-conscious Millennials", desc:"Large addressable market, preventive health trend. Strong app engagement, price-sensitive." },
-          { id:"athletes", label:"Performance Athletes", desc:"High WTP, deeply care about accuracy. Influential word-of-mouth, loyal community." },
-          { id:"chronic", label:"Chronic Condition Patients", desc:"Medical use case, recurring value. Needs clinical validation and healthcare partnerships." },
-          { id:"techAdopters", label:"Tech Early Adopters", desc:"Fastest growing segment, great for brand launch. Trendsetting, love AI features." },
-          { id:"corporate", label:"Corporate Wellness (B2B)", desc:"Large deal sizes, low competition. Longer sales cycle but predictable revenue." }
+          { id:"techAdopters", label:"💻 Tech Early Adopters", desc:"Fastest growing (35% YoY), medium competition, $180 WTP. Love AI and new gadgets.", score:90,
+            advice:"Excellent choice. Tech adopters are the highest-leverage first market for a hardware startup — they forgive early imperfections, amplify word-of-mouth, and set cultural trends other segments follow. Their 35% growth rate is the fastest of any segment." },
+          { id:"athletes", label:"🏋️ Performance Athletes", desc:"High WTP ($250), loyal community, very competitive market.", score:82,
+            advice:"Strong choice. Athletes value accuracy above all else and pay premium prices — Whoop's $3.6B valuation targeting athletes proves this market. Your clinical accuracy is a natural fit. Key risk: very competitive with Whoop, Garmin, and Apple Watch." },
+          { id:"corporate", label:"🏢 Corporate Wellness (B2B)", desc:"Large deal sizes ($8K/deal), low competition, 28% growth.", score:78,
+            advice:"Good strategic thinking. Corporate wellness has the lowest competition and largest deal sizes. The risk is a long sales cycle (9–18 months) that may drain your runway before Series A. Best as a secondary segment unless your team has enterprise sales experience." },
+          { id:"millennials", label:"🧘 Health-conscious Millennials", desc:"Largest market (18M), high competition, $150 WTP.", score:65,
+            advice:"This segment is appealing for its size, but high competition from Oura, Apple Watch, and Fitbit makes differentiation costly. Millennials are also more price-sensitive ($150 WTP) and require heavy ad spend. Better as a secondary segment once brand is established." },
+          { id:"chronic", label:"🩺 Chronic Condition Patients", desc:"12M users, FDA-adjacent complexity, $200 WTP.", score:55,
+            advice:"This segment has real clinical value but comes with significant risks for a startup: regulatory complexity, long trust-building cycles with healthcare providers, and product liability concerns. NOVA Ring's clinical accuracy is a strong fit, but the go-to-market path is much harder." }
         ]
       },
       {
-        id: "secondary_segment",
-        question: "Choose your SECONDARY segment (expansion target)",
-        hint: "Pick a complementary segment that shares channels or needs with your primary.",
-        required: true,
+        id: "secondary_segment", question: "2. Choose your SECONDARY segment (6-month expansion target)",
+        hint: "Pick a segment that shares channels or needs with your primary to maximise synergy.", required: true,
         options: [
-          { id:"millennials", label:"Health-conscious Millennials", desc:"Large addressable market, preventive health trend." },
-          { id:"athletes", label:"Performance Athletes", desc:"High WTP, deeply care about accuracy." },
-          { id:"chronic", label:"Chronic Condition Patients", desc:"Medical use case, recurring value." },
-          { id:"techAdopters", label:"Tech Early Adopters", desc:"Fastest growing, great for brand amplification." },
-          { id:"corporate", label:"Corporate Wellness (B2B)", desc:"Large deal sizes, low competition." }
+          { id:"millennials", label:"🧘 Health-conscious Millennials", desc:"Large market, shares digital channels with most primary segments.", score:80,
+            advice:"Millennials are an effective secondary choice if your primary is Tech Adopters or Athletes — they share social media channels and overlapping content interests. They broaden your addressable market significantly without requiring a brand pivot." },
+          { id:"athletes", label:"🏋️ Performance Athletes", desc:"High WTP, great for referrals and influencer seeding.", score:78,
+            advice:"Athletes pair well with tech adopters as a secondary — both value performance data and respond to influencer recommendations. Adding athletes as secondary also strengthens your accuracy narrative." },
+          { id:"techAdopters", label:"💻 Tech Early Adopters", desc:"Strong amplifiers and reviewers, great for brand signals.", score:75,
+            advice:"Tech adopters as secondary works well if you're leading with athletes or millennials. They generate reviews, YouTube content, and Reddit discussions that organically fuel awareness for your other segments." },
+          { id:"corporate", label:"🏢 Corporate Wellness (B2B)", desc:"High-value, lower-volume segment with long sales cycles.", score:68,
+            advice:"Corporate wellness as a secondary segment is a smart hedge — once you've proven consumer traction, a pilot with 2–3 enterprise accounts builds credibility and creates a recurring revenue stream. However, don't start here if your team lacks B2B sales experience." },
+          { id:"chronic", label:"🩺 Chronic Condition Patients", desc:"Niche but high-impact if you have clinical partnerships.", score:55,
+            advice:"This is a high-impact but difficult secondary — it requires clinical validation and healthcare distribution partnerships your team probably doesn't have yet. Consider this for a later phase once the consumer base is proven." }
         ]
       },
       {
-        id: "value_prop",
-        question: "What is NOVA Ring's core value proposition?",
-        hint: "This is the single idea your entire brand and messaging will anchor to.",
-        required: true,
+        id: "value_prop", question: "3. What is NOVA Ring's core value proposition?",
+        hint: "One message. Every campaign, page, and pitch must anchor to this single idea.", required: true,
         options: [
-          { id:"accuracy", label:"Medical-grade accuracy", desc:"\"The most accurate health ring ever built\" — clinical-level data you can trust." },
-          { id:"design", label:"Minimalist design & lifestyle", desc:"\"Health tracking that doesn't look like health tracking\" — premium aesthetics first." },
-          { id:"comprehensive", label:"Most comprehensive tracking", desc:"\"47 biomarkers in one ring\" — no other device tracks more." },
-          { id:"ai", label:"AI intelligence & insights", desc:"\"Your personal AI health coach\" — not just data, actionable life guidance." },
-          { id:"price", label:"Best value in the category", desc:"\"Premium features, accessible price\" — democratize health intelligence." }
+          { id:"ai", label:"🤖 AI intelligence & insights", desc:"'Your personal AI health coach' — actionable guidance, not just raw data.", score:90,
+            advice:"Top-tier choice for 2025. Consumers are drowning in health data but starving for meaning. Positioning as an AI health coach — not just a tracker — creates emotional resonance and is defensible against hardware-focused competitors. This also justifies a subscription model." },
+          { id:"accuracy", label:"🎯 Medical-grade accuracy", desc:"'The most accurate health ring ever built' — clinical-level data you can trust.", score:85,
+            advice:"Highly differentiated in a market full of devices with questionable data quality. Medical-grade accuracy is a technical moat that Apple and Samsung can't claim in their first-generation rings. Best paired with athletes or chronic patients as primary segment." },
+          { id:"comprehensive", label:"📊 Most comprehensive tracking", desc:"'47 biomarkers in one ring' — no other device tracks more.", score:72,
+            advice:"'Most comprehensive' is compelling but risks being seen as feature-stuffing. Consumers don't buy features — they buy outcomes. If you choose this, ground it in specific use cases: 'The only ring that detects early stress patterns before you feel them.'" },
+          { id:"design", label:"✨ Minimalist design & lifestyle", desc:"'Health tracking that doesn't look like health tracking' — aesthetics-first.", score:60,
+            advice:"Design differentiation is real but fragile — Apple Ring and Oura both compete hard here. Design can be a compelling secondary message but is hard to sustain as a primary value prop for a startup without a luxury brand heritage." },
+          { id:"price", label:"💰 Best value in the category", desc:"'Premium features, accessible price' — democratise health intelligence.", score:40,
+            advice:"Price-as-value-prop signals low confidence in your product and trains customers to expect discounts. It also attracts the most price-sensitive, highest-churn customers. Reserve price competitiveness as a tactical tool, not your identity." }
+        ]
+      },
+      {
+        id: "pain_point", question: "4. What is the primary pain point NOVA Ring solves?",
+        hint: "The best positioning names a specific problem the customer feels daily.", required: true,
+        options: [
+          { id:"reactive", label:"'I only find out I'm unhealthy when it's too late'", desc:"Preventive intelligence — catch issues before they become crises.", score:88,
+            advice:"Outstanding pain point. Prevention is the most emotionally resonant health message — it triggers fear of loss (the most powerful motivator) and positions NOVA Ring as proactive intelligence rather than reactive symptom-tracking. This drives high willingness to pay." },
+          { id:"overwhelmed", label:"'I have data everywhere but no idea what to do'", desc:"Clarity and action from fragmented health data.", score:82,
+            advice:"Very compelling. The average consumer uses 3–5 health apps and wearables but can't synthesise the data. NOVA Ring as the 'single source of truth with AI guidance' solves a real and growing pain. This directly supports the AI value prop." },
+          { id:"performance", label:"'I'm training hard but not recovering smart'", desc:"Optimise performance through recovery intelligence.", score:75,
+            advice:"Specific and credible pain point, especially for athletes. Whoop built its entire brand on this insight. If athletes are your primary segment, this is the right answer — just be prepared to compete directly against a well-funded incumbent." },
+          { id:"cost", label:"'Health monitoring is too expensive and complex'", desc:"Democratise clinical-grade health data for everyone.", score:38,
+            advice:"Cost and complexity as pain points lead to a commoditised product position. When price is the problem you solve, price becomes the only lever you have. This undercuts your ability to charge premium prices and attract high-value customers." }
+        ]
+      },
+      {
+        id: "entry_strategy", question: "5. What is your market entry approach?",
+        hint: "Startups that try to win everywhere at launch typically win nowhere.", required: true,
+        options: [
+          { id:"niche_first", label:"Niche first — dominate one segment completely", desc:"Win 30% share of one segment before expanding. Build proof points.", score:90,
+            advice:"Textbook product marketing strategy and the right answer here. Dominating a niche gives you case studies, referrals, and earned media that make the next segment easier and cheaper to enter. Oura dominated the biohacker niche before going mainstream. Follow that playbook." },
+          { id:"vertical_integration", label:"Platform play — build ecosystem from day one", desc:"Partner with apps, clinics, and employers simultaneously.", score:68,
+            advice:"Ambitious and potentially powerful, but extremely hard to execute with a $2M budget. Building ecosystem partnerships takes 6–12 months per partner. This approach risks diluting focus before you've proven the core product. Better as a Phase 3 or Phase 5 strategy." },
+          { id:"broad_launch", label:"Broad launch — target all segments simultaneously", desc:"Maximum awareness from day one via large-scale campaign.", score:35,
+            advice:"Classic launch mistake. Trying to speak to everyone means your message resonates with no one. A $2M budget spread across 5 segments generates awareness that's a fraction of what a focused niche campaign produces. You'll burn budget with weak conversion." },
+          { id:"waitlist", label:"Waitlist-first — build demand before product ships", desc:"Generate 50K signups before launch, then fulfil in waves.", score:78,
+            advice:"Smart demand validation strategy. A waitlist launch (like Superhuman, Robinhood) creates scarcity, generates organic PR, and gives you a captive audience to nurture. The risk: if the waitlist drains enthusiasm and product ships late, conversion rates collapse." }
+        ]
+      },
+      {
+        id: "acquisition_focus", question: "6. What is your first 90-day customer acquisition focus?",
+        hint: "Acquisition strategy must match your segment's trust-building journey.", required: true,
+        options: [
+          { id:"influencer_seeding", label:"Seed 50 micro-influencers with free product", desc:"Authentic reviews from trusted voices in your niche.", score:88,
+            advice:"Best first-90-day move for a hardware startup. Micro-influencers (10K–100K followers) have 3–5x higher engagement rates than macro-influencers and generate content that serves as evergreen social proof. This builds trust in a category where consumers are skeptical of brand claims." },
+          { id:"pr_launch", label:"PR blitz — target top-tier tech and health press", desc:"TechCrunch, Wired, The Verge, and health podcasts.", score:80,
+            advice:"Earned media in respected publications creates the credibility that paid ads cannot buy. A single Wired feature or NYT health piece can drive tens of thousands of qualified visitors. Pair with influencer seeding for best results." },
+          { id:"paid_ads", label:"Launch paid social campaigns on Meta and TikTok", desc:"Scale fast with data-driven performance marketing.", score:55,
+            advice:"Paid social is scalable but costly and inefficient for launching a new hardware category. When consumers don't yet know they need your product, paid ads require heavy education investment. Better used in months 3–6 once you have social proof from influencers and PR." },
+          { id:"referral", label:"Referral programme — reward existing beta users", desc:"Turn 500 beta users into 5,000 through referral incentives.", score:72,
+            advice:"Referral programmes work brilliantly once you have a happy installed base — but with limited beta users, the multiplier effect is small in the first 90 days. Launch this alongside other channels rather than as the primary driver." }
+        ]
+      },
+      {
+        id: "validation_method", question: "7. How do you validate your segmentation before full spend?",
+        hint: "The best PMMs test assumptions before committing budget. How do you validate yours?", required: true,
+        options: [
+          { id:"landing_page", label:"5 landing pages, $5K ads budget, measure conversion", desc:"A/B test segment-specific value props and measure click-through and sign-up rates.", score:90,
+            advice:"This is the gold standard of lean validation. Five targeted landing pages with $1K ad spend each will reveal which segment converts at lowest CAC before you commit your full budget. This is how the best B2C teams at Airbnb, Dropbox, and Figma validated early market assumptions." },
+          { id:"interviews", label:"20 customer interviews per segment", desc:"Qualitative discovery to understand language, pain, and motivation.", score:85,
+            advice:"Customer interviews are underrated and underused. Talking to 20 people per segment reveals the exact language customers use to describe their pain — language you should mirror in your messaging. Combine with landing page testing for maximum validation." },
+          { id:"pilot", label:"Run a 100-unit pilot with one target segment", desc:"Ship to 100 real customers and measure NPS, retention, and referrals.", score:78,
+            advice:"A real-product pilot gives you authentic usage data: which features get used, where users drop off, and what drives referrals. The challenge is it takes 3–4 months to get meaningful retention data — which may be too slow pre-launch." },
+          { id:"survey", label:"Online survey of 1,000 target customers", desc:"Quantitative data on segment size, WTP, and feature preference.", score:52,
+            advice:"Surveys are fast and cheap, but people systematically overstate willingness to pay and understate actual behaviour. Survey data is useful for directional signals but should never replace behavioural evidence. Treat survey WTP numbers with 40–50% discount." }
         ]
       }
     ],
-    insight: "Segmentation is the foundation of all product marketing. The common mistake is choosing the largest segment instead of the best-fit segment. High WTP, low competition, and strategic fit matter far more than raw market size. Tech early adopters and athletes are typically the highest-leverage first markets for consumer hardware — they amplify your signal and give honest feedback."
+    insight: "Segmentation is the foundation of all product marketing. The most common mistake is choosing the largest segment over the best-fit segment. High WTP, low competition, and strategic clarity matter far more than raw market size. Winning teams choose a specific beachhead, dominate it, then expand — never the reverse."
   },
   {
     id: 2,
     name: "Pricing Strategy",
     subtitle: "Price too low and you leave money on the table. Price too high and the market ignores you.",
     duration: 30,
-    brief: `<strong>The Situation:</strong> Based on your segmentation, it's time to set your go-to-market price. You've received competitive intelligence:<br><br>
-<ul style="list-style:disc;padding-left:20px;margin:8px 0;">
-<li><strong>Oura Ring Gen 4:</strong> $349 hardware + $5.99/mo subscription</li>
-<li><strong>Samsung Galaxy Ring:</strong> $449 one-time, no subscription</li>
-<li><strong>Whoop 5.0:</strong> $0 hardware + $30/mo subscription (athlete-focused)</li>
-<li><strong>Apple Watch Ultra 3:</strong> $849 one-time (premium smartwatch category)</li>
-</ul><br>
-Your COGS (cost of goods) is <strong>$68 per unit</strong>. Your investors expect you to reach <strong>10,000 paying customers</strong> within 12 months.`,
+    brief: `<strong>The Situation:</strong> Time to price NOVA Ring. Competitive intel: Oura Gen 4 is $349 + $5.99/mo · Samsung Galaxy Ring $449 · Whoop $0 hardware + $30/mo · Apple Watch Ultra $849. Your COGS is <strong>$68/unit</strong>. Investors expect <strong>10,000 paying customers</strong> in 12 months. Answer 7 pricing decisions.`,
     dataTitle: "Pricing Model Comparison",
     tableHeaders: ["Model","Revenue Predictability","Customer Barrier","LTV Potential","Best For"],
     tableRows: [
       ["One-time only","🔴 Low","🟢 Low","🔴 Low","Price-sensitive segments"],
-      ["Hardware + monthly sub","🟡 Medium","🟡 Medium","🟢 High","Health-engaged, data-hungry users"],
-      ["Premium bundle (hw + year sub)","🟡 Medium","🔴 High (upfront)","🟢 High","High-WTP early adopters"],
-      ["B2B per-seat annual","🟢 Very High","🟢 Low (per-seat)","🟢 Very High","Corporate wellness buyers"],
-      ["Freemium (free app, hw purchase)","🔴 Low","🟢 Lowest","🟡 Medium","Volume/awareness play"]
+      ["Hardware + monthly sub","🟡 Medium","🟡 Medium","🟢 High","Health-engaged users"],
+      ["Premium bundle (hw + 1yr sub)","🟡 Medium","🔴 High upfront","🟢 High","High-WTP early adopters"],
+      ["B2B per-seat annual","🟢 Very High","🟢 Low per-seat","🟢 Very High","Corporate wellness"],
+      ["Freemium","🔴 Low","🟢 Lowest","🟡 Medium","Volume / awareness play"]
     ],
     decisions: [
       {
-        id: "price_point",
-        question: "Set your launch price point (hardware)",
-        hint: "Consider your segment's WTP, your COGS ($68), and competitor anchoring.",
-        required: true,
+        id: "price_point", question: "1. Set your launch price point (hardware)",
+        hint: "Consider segment WTP, your $68 COGS, and competitor anchoring.", required: true,
         options: [
-          { id:"p99",  label:"$99",  desc:"Aggressive entry price. Barely above COGS. Volume play — needs 20K+ units to hit revenue goals." },
-          { id:"p149", label:"$149", desc:"Accessible premium. 2.2x COGS margin. Competitive vs Oura. Broadens addressable market." },
-          { id:"p199", label:"$199", desc:"Strong mid-market position. 2.9x margin. Leaves room for subscription upsell." },
-          { id:"p249", label:"$249", desc:"Premium positioning. 3.7x margin. Signals quality, narrows audience." },
-          { id:"p299", label:"$299+",desc:"High-end positioning. 4.4x+ margin. Directly competes with Oura, needs strong differentiation." }
+          { id:"p199", label:"$199", desc:"2.9× COGS margin. Strong mid-market. Leaves room for subscription upsell.", score:88,
+            advice:"Optimal for most segments. $199 sits in the sweet spot: it signals premium quality, leaves a healthy margin, and lands 42% below Oura — a strong 'premium but smarter' anchor. It also leaves room for a subscription tier that boosts LTV without feeling expensive." },
+          { id:"p249", label:"$249", desc:"3.7× COGS margin. Premium positioning. Signals high quality.", score:80,
+            advice:"Defensible if your primary segment is athletes or tech adopters with $250 WTP. At $249, you're close enough to Oura to benefit from comparison shopping while signalling superior specs. Risk: narrows your addressable market at launch." },
+          { id:"p149", label:"$149", desc:"2.2× COGS margin. Accessible premium. Broadens market.", score:72,
+            advice:"Good choice if you're targeting millennials or want volume over margin. $149 minimises purchase anxiety but trains the market to see you as an affordable option — which creates a ceiling on future price increases. Make sure subscription LTV compensates." },
+          { id:"p299", label:"$299+", desc:"4.4× COGS margin. High-end, directly competes with Oura.", score:65,
+            advice:"Justifiable only if you have a clearly superior product story and strong brand. At $299 you're side-by-side with Oura in every comparison article — which means you win only if your differentiation is immediately obvious. Not recommended as an early-stage startup without strong brand investment." },
+          { id:"p99", label:"$99", desc:"Barely above COGS. Volume play — needs 20K+ units.", score:30,
+            advice:"Dangerous price point. $99 barely covers COGS, leaves no margin for marketing, and signals low quality in a category where consumers are sceptical of cheap devices. You'd need 20,000+ units to hit revenue targets — an extremely high bar with $2M budget." }
         ]
       },
       {
-        id: "pricing_model",
-        question: "Choose your pricing model",
-        hint: "The model shapes LTV, churn, and your relationship with the customer.",
-        required: true,
+        id: "pricing_model", question: "2. Choose your pricing model",
+        hint: "The model determines LTV, churn, and your investor story.", required: true,
         options: [
-          { id:"one_time",   label:"One-time purchase only",       desc:"Simple, no lock-in. Good for skeptical customers. Low LTV risk." },
-          { id:"hw_sub",     label:"Hardware + subscription",      desc:"Hardware purchase + $9.99/mo for AI insights. Industry standard for rings." },
-          { id:"premium_bundle", label:"Premium bundle (hw + 1yr)", desc:"Higher upfront ($X + 12 months included). Great perceived value, high LTV." },
-          { id:"b2b_seat",   label:"B2B per-seat annual license",  desc:"Sell to companies at $X/employee/year. Predictable, scalable revenue." }
+          { id:"hw_sub", label:"Hardware + monthly subscription ($9.99/mo)", desc:"Industry standard for health rings. Recurring AI insights.", score:92,
+            advice:"Best-practice model for health rings in 2025. Hardware gives you upfront revenue; subscription gives you predictable ARR that investors love. $9.99/mo is the sweet spot — low enough not to cause subscription fatigue, high enough to build meaningful recurring revenue. LTV at 18-month average churn = ~$310 total." },
+          { id:"premium_bundle", label:"Premium bundle (hardware + 1-year sub included)", desc:"Higher upfront price, great perceived value.", score:80,
+            advice:"Smart alternative to separate subscription — customers who pay upfront have lower churn and higher satisfaction. The challenge is the higher sticker price creates a bigger purchase barrier. Works best if you can offer it alongside the hardware + sub option." },
+          { id:"one_time", label:"One-time purchase only", desc:"Simple, no lock-in, lower LTV.", score:50,
+            advice:"The simplest model but leaves significant LTV on the table. Without a subscription, you have no reason for customers to stay engaged, no recurring revenue for investors, and no data flywheel to improve the AI. Only consider this if your target market strongly resists subscriptions." },
+          { id:"b2b_seat", label:"B2B per-seat annual licence", desc:"Enterprise sales, high ACV, long cycles.", score:68,
+            advice:"Powerful model if corporate wellness is your primary segment, but wrong for consumer-first GTM. B2B annual licences ($50–150/seat/year × company size) produce great ACV but require a dedicated sales team and 6–12 month procurement cycles — likely too slow for Series A proof points." }
         ]
       },
       {
-        id: "launch_offer",
-        question: "Choose your launch promotion strategy",
-        hint: "Launch offers set price expectations — be careful with heavy discounts.",
-        required: true,
+        id: "launch_offer", question: "3. Choose your launch promotion strategy",
+        hint: "Launch offers set long-term price expectations. Handle with care.", required: true,
         options: [
-          { id:"standard",       label:"Standard price, no discount",    desc:"Protects price integrity. Signals confidence. Reduces deal-seeker acquisition." },
-          { id:"early_bird",     label:"20% early-bird for first 500",   desc:"Creates urgency. Common tactic. Risk: anchors expectation of discounts." },
-          { id:"premium_bundle", label:"Free premium bundle (accessory)", desc:"Adds value without discounting price. Protects ASP while delighting buyers." },
-          { id:"influencer",     label:"Creator codes (15% off)",         desc:"Distributes discount via influencers. Drives awareness + conversion together." }
+          { id:"value_add", label:"Add value, don't cut price (free accessory bundle)", desc:"Protective case + extra band included. Same price, more perceived value.", score:90,
+            advice:"The smartest launch tactic. Adding physical value (accessories, extended warranty, premium app features) increases perceived value without training customers to expect discounts. Apple uses this playbook masterfully — 'free AirPods with Mac' never cheapens the Mac." },
+          { id:"standard", label:"Standard price, no promotion", desc:"Full confidence in product value. No gimmicks.", score:78,
+            advice:"Projecting price confidence at launch is a strong brand signal — it says 'we know what we're worth.' The risk is a slower ramp if the market needs initial incentive. Works best if you have strong PR and influencer buzz generating demand independently." },
+          { id:"influencer", label:"Creator discount codes (15% off)", desc:"Distribute via influencers. Drives awareness + conversion.", score:65,
+            advice:"Influencer codes are common and expected in the consumer hardware space. 15% is modest enough to preserve price integrity while rewarding the influencer's audience. The downside: you permanently associate your brand with 'discount-available-if-you-know-where-to-look.'" },
+          { id:"early_bird", label:"20% early-bird discount for first 500 buyers", desc:"Creates urgency. Classic launch tactic.", score:45,
+            advice:"Early-bird discounts generate initial spike but create three problems: (1) You anchor your brand to a lower price in early reviews. (2) Customers who pay full price later feel cheated. (3) It trains your audience to wait for the next sale. Avoid unless you need a launch push metric." }
+        ]
+      },
+      {
+        id: "competitive_price_position", question: "4. How do you position your price vs Oura Ring ($349)?",
+        hint: "Price positioning relative to the category leader shapes perception instantly.", required: true,
+        options: [
+          { id:"challenger", label:"Price 40% below Oura — clear value challenger", desc:"'Same clinical quality, smarter price.' $199 vs $349.", score:85,
+            advice:"The challenger position is powerful and honest at $199. 'Same clinical accuracy, 40% less expensive' is a compelling message that doesn't cheapen the brand — you're not claiming to be cheap, you're claiming the incumbent is overpriced. This is how Notion beat Confluence and how Figma beat Sketch." },
+          { id:"parity", label:"Price at parity with Oura — compete on features", desc:"'Better product, same price.' Head-to-head competition.", score:72,
+            advice:"Price parity forces your positioning onto pure product quality — you win only if your features clearly outperform. This requires flawless execution: superior accuracy data, better app, and compelling AI features that Oura lacks. High upside if you can deliver, high risk if not." },
+          { id:"premium", label:"Price above Oura — position as the superior category", desc:"'The medical-grade ring for serious users.' $399+.", score:55,
+            advice:"Going above Oura as an unknown brand requires extraordinary product proof and credibility (clinical studies, celebrity endorsements, media coverage). Without these, consumers will default to the known brand at the lower price. Consider this only in phase 3+ after building trust." },
+          { id:"unanchored", label:"Don't reference competitors in pricing at all", desc:"Create an entirely new category and price frame.", score:42,
+            advice:"Category creation is a legitimate strategy but extremely resource-intensive. Creating a new mental frame in consumers' minds requires years of consistent messaging and significant marketing investment. At Series A stage, you lack the budget to out-position a category leader." }
+        ]
+      },
+      {
+        id: "trial_policy", question: "5. What is your trial / guarantee policy?",
+        hint: "Trial policies directly affect conversion rates and return fraud risk.", required: true,
+        options: [
+          { id:"trial_60", label:"60-day money-back guarantee", desc:"Industry-leading guarantee that removes purchase risk.", score:88,
+            advice:"A 60-day guarantee is a conversion superpower. It shifts the risk from the buyer to you — and statistically, customers who buy with a guarantee return at only 8–12% because the buying intention was genuine. Oura offers 30 days; going 60 days is a differentiator that signals extreme confidence in product quality." },
+          { id:"trial_30", label:"Standard 30-day return policy", desc:"Matches industry norm. Balanced risk.", score:72,
+            advice:"30 days is table stakes in consumer hardware. It reduces purchase anxiety but isn't a differentiator. Most of your competitors offer the same or similar. If you want to use guarantee as a marketing message, 30 days is too common to be noteworthy." },
+          { id:"no_trial", label:"No returns on opened products (hygiene policy)", desc:"Health device hygiene rationale. Protects against fraud.", score:45,
+            advice:"Legally defensible but commercially damaging. Customers perceive no-return policies as a brand lacking confidence in its product. In a market with well-funded competitors offering free returns, this policy directly reduces conversion rates and triggers negative reviews." },
+          { id:"freemium_trial", label:"2-week free hardware trial, then buy or return", desc:"Zero-barrier trial to maximise initial adoption.", score:78,
+            advice:"Free hardware trials have extraordinary conversion rates (typically 60–80%) because customers experience value before commitment. The logistics cost is high (return shipping, refurbishment), but the CAC reduction can more than compensate. Companies like Casper built their growth on this model." }
+        ]
+      },
+      {
+        id: "price_communication", question: "6. How do you communicate your price on the website?",
+        hint: "How you frame price matters as much as the number itself.", required: true,
+        options: [
+          { id:"daily_cost", label:"Reframe as daily cost: 'Less than your morning coffee'", desc:"$199 = $0.55/day. Makes price feel negligible.", score:85,
+            advice:"Price reframing is one of the most effective conversion tactics in marketing. '$0.55/day for clinical health intelligence' transforms a $199 barrier into a daily habit comparison. This works because it shifts the reference frame from 'big purchase' to 'recurring small cost' — which feels psychologically trivial." },
+          { id:"roi_frame", label:"ROI frame: 'Catch one health issue early, save $5,000'", desc:"Position price against cost of reactive healthcare.", score:88,
+            advice:"The most powerful pricing frame for a health product. When the alternative is an ER visit, specialist consult, or chronic condition management, $199 is obviously cheap. This frame is especially persuasive for the chronic patient segment and corporate wellness buyers evaluating ROI on health benefits." },
+          { id:"feature_list", label:"Lead with feature list, show price at bottom", desc:"Let features justify the price before revealing it.", score:55,
+            advice:"Feature-first pricing pages have 30–40% lower conversion than benefit or outcome-first pages. Consumers don't buy features — they buy outcomes and feelings. Leading with a feature list makes the page feel like a spec sheet, not a compelling offer." },
+          { id:"compare_table", label:"Comparison table: NOVA Ring vs Oura vs Apple Ring", desc:"Let the table sell itself — show value clearly.", score:78,
+            advice:"Comparison tables work well when you genuinely win across multiple dimensions — which NOVA Ring does on accuracy and AI. The risk is choosing the wrong comparison dimensions: if you include columns where competitors win (brand recognition, ecosystem), you undermine your own case." }
+        ]
+      },
+      {
+        id: "revenue_priority", question: "7. What is your Year 1 revenue priority?",
+        hint: "Volume and margin are both valid strategies — but not simultaneously at Series A stage.", required: true,
+        options: [
+          { id:"margin", label:"Margin over volume — fewer customers, higher LTV", desc:"Target 3,000 high-WTP customers at $199 + $9.99/mo.", score:85,
+            advice:"The smarter Series A strategy. Investors care more about LTV/CAC ratio and net revenue retention than raw customer count. 3,000 customers with $250 LTV each and 90% retention is a better business story than 10,000 customers with 60% churn and $99 ARPU." },
+          { id:"volume", label:"Volume over margin — maximise customer count", desc:"Target 15,000 customers with aggressive pricing.", score:60,
+            advice:"Volume makes sense if your product is a marketplace or has strong network effects — but a health ring doesn't. Acquiring 15,000 customers cheaply often means acquiring low-quality customers who churn quickly. High volume with low LTV is a trap that drains cash before you prove retention." },
+          { id:"balanced", label:"Balanced: 8,000 customers at mid-tier pricing", desc:"Hit investor targets while protecting margin.", score:78,
+            advice:"A reasonable middle ground that hits investor milestones without completely sacrificing margin. The risk is it requires you to be 'good enough' at both acquisition and retention without excelling at either. Works if execution is disciplined and CAC is well-controlled." },
+          { id:"arr_focus", label:"ARR focus — prioritise subscription attach rate", desc:"Every hardware sale must convert to subscription.", score:90,
+            advice:"The optimal Year 1 strategy. Building an ARR base transforms your Series A story from 'hardware company' to 'recurring revenue SaaS-like business' — which commands 5–8× higher multiples. Target 80%+ subscription attach rate on every hardware sale from day one." }
         ]
       }
     ],
-    insight: "Pricing is the most powerful and underused lever in product marketing. Three principles from behavioral economics: (1) Anchoring — your price signals category; (2) Subscription models dramatically increase LTV and defensibility; (3) Never discount the core product at launch — it's nearly impossible to reverse. Bundle value instead of cutting price. The best-performing consumer hardware brands typically launch at a price that makes early adopters feel like they're getting a fair deal, not a steal."
+    insight: "Pricing is the single highest-leverage decision in product marketing — a 1% improvement in price realisation typically drives 10× more profit than a 1% improvement in volume. The best pricing strategies combine a mid-premium price point, a subscription model for LTV, value-add promotions instead of discounts, and outcome-based price framing that makes the number feel irrelevant."
   },
   {
     id: 3,
     name: "Go-to-Market Channels",
-    subtitle: "The best product with the wrong channels will fail. Reach the right people, the right way.",
+    subtitle: "The best product with wrong channels fails. Reach the right people, the right way.",
     duration: 30,
-    brief: `<strong>The Situation:</strong> It's launch quarter. You have a <strong>$500K marketing budget</strong> to allocate across channels for the first 6 months. Your choices should align tightly with your target segment — different customers live in different places.<br><br>
-Allocate your budget across 5 channels (total must equal 100%). Then choose your strategic launch partner.`,
-    dataTitle: "Channel Effectiveness by Segment",
+    brief: `<strong>The Situation:</strong> Launch quarter. You have <strong>$500K marketing budget</strong> for the first 6 months. Different customers live in very different places — your channel mix must match your segment. Answer 7 channel and launch strategy decisions.`,
+    dataTitle: "Channel Effectiveness by Segment (⭐ = high fit)",
     tableHeaders: ["Channel","Millennials","Athletes","Chronic","Tech Adopters","Corporate"],
     tableRows: [
-      ["Performance ads (Meta/Google/TikTok)","⭐⭐⭐","⭐⭐","⭐","⭐⭐⭐","⭐"],
+      ["Performance ads (Meta/TikTok/Google)","⭐⭐⭐","⭐⭐","⭐","⭐⭐⭐","⭐"],
       ["Influencer & creator partnerships","⭐⭐⭐","⭐⭐⭐⭐","⭐⭐","⭐⭐⭐","⭐"],
       ["PR & earned media","⭐⭐","⭐⭐","⭐⭐⭐","⭐⭐⭐⭐","⭐⭐"],
-      ["Content & community building","⭐⭐","⭐⭐⭐⭐","⭐⭐⭐","⭐⭐⭐","⭐⭐"],
+      ["Content & community","⭐⭐","⭐⭐⭐⭐","⭐⭐⭐","⭐⭐⭐","⭐⭐"],
       ["B2B / channel partnerships","⭐","⭐","⭐⭐","⭐","⭐⭐⭐⭐⭐"]
     ],
     decisions: [
       {
-        id: "channel_alloc",
-        question: "Allocate your $500K marketing budget (must total 100%)",
-        hint: "Align your highest budget to channels that best reach your primary segment.",
-        required: true,
-        type: "sliders",
+        id: "channel_alloc", question: "1. Allocate your $500K marketing budget (must total 100%)",
+        hint: "Your highest allocation should go to the 1–2 channels that best reach your primary segment.",
+        required: true, type: "sliders",
         channels: [
-          { id:"perf",    label:"📱 Performance Marketing",  desc:"Paid social & search ads (Meta, Google, TikTok)" },
-          { id:"influencer", label:"🌟 Influencer & Creators", desc:"Sponsored creators, review seeding, ambassador programs" },
-          { id:"pr",      label:"📰 PR & Earned Media",       desc:"Journalists, tech press, podcast appearances, product reviews" },
-          { id:"content", label:"🏘️ Community & Content",    desc:"Blog, YouTube, Reddit, owned social, user community" },
-          { id:"biz",     label:"🤝 B2B / Partnerships",      desc:"Channel sales, corporate deals, retail partnerships" }
+          { id:"perf",       label:"📱 Performance Marketing",   desc:"Paid social & search (Meta, Google, TikTok)" },
+          { id:"influencer", label:"🌟 Influencer & Creators",   desc:"Sponsored creators, review seeding, ambassadors" },
+          { id:"pr",         label:"📰 PR & Earned Media",       desc:"Tech press, health journalists, podcasts" },
+          { id:"content",    label:"🏘️ Community & Content",     desc:"YouTube, Reddit, owned social, blog" },
+          { id:"biz",        label:"🤝 B2B / Partnerships",      desc:"Channel sales, corporate deals, retail" }
         ]
       },
       {
-        id: "launch_partner",
-        question: "Choose your primary strategic launch partner",
-        hint: "Your partner gives you distribution, credibility, or access you can't buy alone.",
-        required: true,
+        id: "launch_partner", question: "2. Choose your primary strategic launch partner",
+        hint: "Your partner gives you distribution, credibility, or access you can't buy alone.", required: true,
         options: [
-          { id:"amazon",      label:"Amazon + DTC only",        desc:"Maximum distribution reach. No exclusive lock-in. Best for broad consumer segments." },
-          { id:"bestbuy",     label:"Best Buy + Apple Store",    desc:"Premium retail presence. Great for tech early adopters. Demo-able in-store." },
-          { id:"peloton",     label:"Peloton / Strava partnership", desc:"Deep integration with the athlete ecosystem. Bundled offers, co-marketing." },
-          { id:"telehealth",  label:"Telehealth platform",       desc:"Reach chronic condition patients through their healthcare journey. Clinical credibility." },
-          { id:"corporate",   label:"Corporate HR platform",     desc:"Enterprise distribution via benefits providers (Aetna, Mercer, Castlight)." }
+          { id:"bestbuy",    label:"Best Buy + Apple Store retail", desc:"Premium retail presence. Demo-able in-store. Great for tech adopters.", score:82,
+            advice:"Excellent choice for tech early adopters. In-store demo capability is critical for hardware — customers who try the ring convert at 3–5× the rate of those who only see it online. Apple Store presence also signals quality and attracts premium buyers." },
+          { id:"peloton",    label:"Peloton / Strava / Garmin ecosystem", desc:"Deep athlete integration. Co-marketing and bundled offers.", score:85,
+            advice:"Outstanding for athletes as primary segment. Peloton has 6M+ members who are exactly your performance athlete target — and they already pay for health technology. A bundle offer ('NOVA Ring free with Peloton membership') could generate 50K+ trial users overnight." },
+          { id:"telehealth", label:"Telehealth platform (Teladoc, Hims)", desc:"Reach chronic patients through healthcare journey.", score:78,
+            advice:"The right answer if chronic condition patients are your primary segment. Telehealth platforms have direct access to patients managing ongoing health conditions — the exact people who value clinical-grade monitoring. Adds medical credibility that no consumer retailer can provide." },
+          { id:"amazon",     label:"Amazon DTC + own website", desc:"Maximum distribution reach, no exclusivity.", score:68,
+            advice:"Amazon gives you distribution but little brand control. Your product page will appear next to cheaper knockoffs, and Amazon's algorithm commoditises hardware. Good as a secondary channel but shouldn't be your primary launch strategy if brand building matters." },
+          { id:"corporate",  label:"Corporate HR platform (Aetna, Mercer)", desc:"Enterprise distribution via benefits providers.", score:72,
+            advice:"Powerful for corporate wellness B2B segment but requires 6–12 months to negotiate and onboard. If this is your primary channel, make sure your sales cycle assumptions align with your runway. Better as a month-6 channel addition than a launch-day primary." }
+        ]
+      },
+      {
+        id: "launch_timing", question: "3. When do you launch relative to Apple Ring's announced Q3 date?",
+        hint: "Timing around a major competitive announcement is a critical strategic choice.", required: true,
+        options: [
+          { id:"before_apple", label:"Launch Q2 — 3 months before Apple Ring", desc:"Be first, establish brand before Apple's launch hype.", score:88,
+            advice:"The optimal timing call. Launching 3 months before Apple Ring gives you first-mover advantage in the post-announcement cycle. Media will be hungry for ring content after Apple's announcement — you become the 'David vs Goliath' story. Early customers become evangelists before Apple ships." },
+          { id:"same_time",    label:"Launch same week as Apple Ring (Q3)", desc:"Ride Apple's category awareness wave.", score:65,
+            advice:"Tempting but risky. Apple's launch week will dominate every tech publication, YouTube channel, and social feed. Your launch will be buried. The category awareness benefit is real, but you need to be willing to compete for attention against the world's most valuable company simultaneously." },
+          { id:"after_apple",  label:"Launch Q4 — after Apple Ring reviews are out", desc:"Use Apple's reviews to identify gaps you can exploit.", score:78,
+            advice:"A tactical delay to let Apple's reviews surface their weaknesses (accuracy gaps, subscription model complaints) is smart positioning. You can then launch with direct comparison evidence: 'Every review says Apple Ring lacks clinical accuracy. We built the one that has it.'" },
+          { id:"stealth",      label:"No fixed date — launch when product is perfect", desc:"Quality over speed. Launch when truly ready.", score:40,
+            advice:"'Perfect at launch' is a trap that has killed many startups. Market timing matters — and if you're 70% ready when Apple Ring launches and you wait another 6 months for the remaining 30%, you've missed the category window entirely. Ship early, iterate fast." }
+        ]
+      },
+      {
+        id: "launch_activation", question: "4. Choose your primary launch activation type",
+        hint: "Your launch moment sets the brand narrative for the next 12 months.", required: true,
+        options: [
+          { id:"product_hunt", label:"Product Hunt + YouTube reviewer blitz", desc:"Coordinate 20 YouTube reviews on launch day + #1 on Product Hunt.", score:88,
+            advice:"The most cost-effective hardware launch playbook for tech early adopters. A coordinated YouTube reviewer launch (MKBHD, Linus, Dave2D) + Product Hunt #1 can generate 500K–1M organic views in 72 hours. This is how Oura, Nothing Phone, and Framework Laptop built early momentum." },
+          { id:"event",        label:"Invite-only launch event for 200 press and influencers", desc:"Create an exclusive in-person moment with live demo.", score:75,
+            advice:"Physical launch events build brand memory and generate social content — but cost $150K–400K to execute well, which eats 15–20% of your entire marketing budget in one day. Viable if you have strong PR relationships and can guarantee top-tier media attendance." },
+          { id:"clinical_study", label:"Publish clinical accuracy study on launch day", desc:"'Independently validated to beat Oura on accuracy.'", score:85,
+            advice:"For a product competing on accuracy, a published clinical study is the most credible possible launch asset. This single piece of evidence can anchor media coverage, justify premium pricing, and differentiate from Apple Ring in one move. Healthcare journalists will cover it as news." },
+          { id:"community",    label:"Reddit / Discord community launch with beta cohort", desc:"500 beta users create organic launch energy in niche forums.", score:70,
+            advice:"Community-first launches build loyalty that paid campaigns can't replicate. Beta users on r/QuantifiedSelf, r/Fitness, and running Discord servers are exactly your target demographic. The risk is limited initial reach — pair with PR or influencer channel for broader distribution." }
+        ]
+      },
+      {
+        id: "pr_angle", question: "5. What is your primary PR story angle?",
+        hint: "Journalists need a story hook. Choose the angle most likely to generate coverage.", required: true,
+        options: [
+          { id:"vs_apple",   label:"'The ring that beats Apple at its own game'", desc:"Head-to-head accuracy comparison narrative.", score:85,
+            advice:"David vs Goliath narratives are irresistible to tech journalists. 'Startup beats Apple on clinical accuracy' writes itself as a headline. This angle guarantees coverage in TechCrunch, Wired, and The Verge — all of which will be looking for Apple Ring counter-narratives. Just make sure your accuracy claims are independently validated." },
+          { id:"ai_health",  label:"'The first health ring powered by real AI'", desc:"Category creation story around AI health intelligence.", score:80,
+            advice:"AI positioning is strong in the current media climate. 'Real AI' (not marketing AI) means journalists can write a genuine technology story about how the models work, what they predict, and what clinical partners have validated. This angle works best in health-focused publications." },
+          { id:"accuracy",   label:"Clinical validation story — published study results", desc:"Peer-reviewed data that no other ring can match.", score:88,
+            advice:"The highest-credibility angle. A peer-reviewed clinical study published in a medical journal (or even a preprint) gives journalists a verifiable, fact-based story that's immune to 'company claims' scepticism. This also unlocks healthcare media (Stat News, MedPage) as a new PR channel." },
+          { id:"founder",    label:"Founder story — personal health journey that created this", desc:"Authentic human narrative behind the technology.", score:55,
+            advice:"Founder stories create emotional connection but rarely drive hardware purchase decisions in the tech media. Unless the founder's story is extraordinary (survived cancer, elite athlete, renowned physician), this angle generates softer lifestyle coverage rather than the tech and health credibility you need at launch." }
+        ]
+      },
+      {
+        id: "campaign_priority", question: "6. What is your 90-day campaign priority?",
+        hint: "With limited budget, focus matters more than coverage.", required: true,
+        options: [
+          { id:"awareness_niche", label:"Deep awareness within one niche community", desc:"Own the conversation in your primary segment's media channels.", score:90,
+            advice:"Depth before breadth is the right early-stage principle. Being the undisputed 'ring of choice' for tech early adopters or athletes creates a concentrated base of passionate advocates. One niche fully saturated is worth more than five niches superficially touched — because the advocates convert the adjacent segments for free." },
+          { id:"broad_awareness", label:"Broad consumer awareness across all segments", desc:"Maximum reach across social, PR, and paid channels.", score:40,
+            advice:"Broad awareness campaigns with limited budget produce thin reach and low conversion. $500K trying to reach everyone produces approximately $0.50 of impression value per target customer across five segments — not enough to build brand memory or drive action in any of them." },
+          { id:"conversion", label:"Conversion optimisation — maximise website purchase rate", desc:"Heavy testing of landing pages, checkout, and retargeting.", score:75,
+            advice:"Conversion optimisation pays off when you have meaningful traffic to convert. In the first 90 days with limited awareness, optimising a low-traffic funnel has diminishing returns. Phase this into months 3–6 once influencer and PR campaigns are generating consistent inbound." },
+          { id:"retention", label:"Retention campaign — maximise beta user satisfaction and NPS", desc:"Turn 500 beta users into 5,000 through referrals.", score:72,
+            advice:"Investing in beta user retention before launch is smart product marketing. High NPS beta users generate authentic reviews, social posts, and referrals that paid campaigns can't replicate. This is especially powerful if your 500 beta users include any micro-influencers or healthcare professionals." }
+        ]
+      },
+      {
+        id: "primary_kpi", question: "7. What is your primary 90-day launch KPI?",
+        hint: "The metric you optimise for shapes every decision your team makes.", required: true,
+        options: [
+          { id:"revenue", label:"Revenue — $500K in sales in first 90 days", desc:"Proof that customers will pay for the product.", score:72,
+            advice:"Revenue is a real signal but a blunt one at 90 days. Early revenue can come from one-time buyers who churn in month 3, creating a false positive. Pair revenue with retention or subscription attach rate to get a meaningful picture of business health." },
+          { id:"ltv_cac",  label:"LTV/CAC ratio — above 3:1 within 90 days", desc:"Prove the unit economics work before scaling.", score:90,
+            advice:"The ideal primary KPI at launch stage. An LTV/CAC ratio above 3:1 proves your business model works at scale — and this is what Series A investors will scrutinise most heavily. If you can show 3:1 in 90 days, you can confidently press the growth accelerator. Below 1.5:1, fix the model before scaling." },
+          { id:"units",    label:"Units sold — 2,000 units in 90 days", desc:"Volume signal to prove market demand.", score:55,
+            advice:"Unit volume is a vanity metric without quality context. 2,000 units sold at 40% churn produces a worse investor story than 800 units with 90% 3-month retention. Track units alongside retention and NPS, not instead of them." },
+          { id:"nps",      label:"NPS score above 60 — prove product-market fit", desc:"Leading indicator of organic growth and retention.", score:85,
+            advice:"NPS above 60 is the clearest leading indicator of product-market fit for a hardware subscription business. It predicts referral rates, churn, and organic growth better than any other single metric. Pair it with revenue to show both qualitative fit and commercial traction." }
         ]
       }
     ],
-    insight: "Channel selection is one of the most common go-to-market mistakes — teams copy what the biggest brand in their category does, rather than going where their specific customer actually is. Athletes live on YouTube, Strava, and training forums — not Instagram. Chronic patients live in Facebook Groups and telehealth apps. Tech adopters read The Verge and follow YouTubers. The best channel mix laser-focuses 60%+ of budget on 2 high-fit channels, not a spray-and-pray across 5."
+    insight: "Channel strategy is where most go-to-market plans fail — not because the product is wrong, but because teams spread budget too thin or choose channels they know instead of channels their customer uses. The best PMMs ask: 'Where does my specific customer spend 2 hours a day?' and put 60% of budget there."
   },
   {
     id: 4,
     name: "Market Disruption",
     subtitle: "The market just changed. Every strategy must survive contact with reality.",
     duration: 30,
-    brief: `<strong>BREAKING — Market Event:</strong><br><br>
-<div style="background:rgba(255,100,100,0.12);border:1px solid rgba(255,100,100,0.3);border-radius:10px;padding:16px;margin:8px 0;">
-⚡ <strong>Apple just announced Apple Ring</strong> — a fashion-forward health ring launching in Q3 at $299. Features: sleep, heart rate, SpO2. Apple Health deep integration. Initial reviews praise design but criticize accuracy gaps vs medical-grade devices. Pre-orders already at 500K units.
-</div><br>
-Apple's entry <em>validates</em> the category but also creates a powerful new competitor. How you respond now determines whether NOVA Ring survives or thrives. Two strategic decisions needed.`,
-    dataTitle: "Competitive Landscape After Apple Ring Announcement",
-    tableHeaders: ["Brand","Price","Strength","Weakness","Your Opportunity"],
+    brief: `<strong>⚡ Breaking:</strong> Apple just announced Apple Ring at $299 for Q3. Sleep, heart rate, SpO2 — Apple Health integration — 500K pre-orders. Reviews note design excellence but accuracy gaps vs clinical devices. This validates your category AND creates a major competitor. Answer 7 response decisions.`,
+    dataTitle: "Competitive Landscape After Apple Ring",
+    tableHeaders: ["Brand","Price","Strength","Key Weakness","Your Opportunity"],
     tableRows: [
-      ["Apple Ring","$299","Brand, ecosystem, design","Basic accuracy, no subscription AI","Accuracy + AI differentiation"],
-      ["Oura Ring","$349+sub","Sleep tracking heritage","Limited health scope, aging UI","Broader tracking + modern UX"],
-      ["Whoop","$0+$30/mo","Athlete credibility","Aesthetics, mainstream appeal","Cross-segment play"],
-      ["NOVA Ring","Your price","AI + accuracy","Brand awareness","Clearly stake your claim NOW"]
+      ["Apple Ring","$299","Brand + design + ecosystem","Basic accuracy, no AI coach","Clinical accuracy + AI differentiation"],
+      ["Oura Ring","$349+sub","Heritage, sleep tracking","Limited scope, aging UX","Broader AI + modern experience"],
+      ["Whoop","$0+$30/mo","Athlete credibility","Aesthetics, mainstream appeal","Design + accuracy crossover"],
+      ["NOVA Ring","Your price","Clinical AI accuracy","Brand awareness","Own accuracy narrative NOW"]
     ],
     decisions: [
       {
-        id: "competitive_response",
-        question: "How does NOVA Ring respond to Apple Ring's announcement?",
-        hint: "Your response strategy determines your brand positioning for the next 2 years.",
-        required: true,
+        id: "competitive_response", question: "1. What is your primary competitive response to Apple Ring?",
+        hint: "Your response in the next 2 weeks sets your brand position for 2 years.", required: true,
         options: [
-          { id:"differentiate",  label:"Double down on differentiation",    desc:"Launch a bold 'accuracy matters' campaign. Publish head-to-head data vs Apple Ring. Own clinical accuracy positioning." },
-          { id:"attack_price",   label:"Aggressive price cut to undercut",  desc:"Drop price to create price gap vs Apple. Race to acquire customers before Apple launches." },
-          { id:"partner",        label:"Seek an acquisition/partnership",   desc:"Proactively approach health platforms or employers about partnership deals before Apple dominates distribution." },
-          { id:"niche_down",     label:"Retreat to a defensible niche",     desc:"Fully commit to the chronic patient or athletic segment where Apple won't aggressively compete." }
+          { id:"differentiate", label:"Double down on differentiation — publish accuracy data", desc:"Head-to-head clinical accuracy study vs Apple Ring.", score:92,
+            advice:"The strongest response available. Publishing independent accuracy data within weeks of Apple's announcement makes NOVA Ring the 'serious health device' vs Apple's 'fashion accessory.' This is exactly the playbook that Oura used when Apple Watch launched — and Oura's valuation grew 10× in the following two years." },
+          { id:"niche_down",    label:"Commit fully to the segment Apple won't serve", desc:"Go all-in on athletes or chronic patients — Apple won't follow.", score:78,
+            advice:"Smart defensive positioning. Apple Ring's mainstream focus means it will never deliver the 47-biomarker clinical depth that athletes or chronic patients need. Committing to that niche makes you untouchable in your core segment — Apple's entry actually validates the broader category you're leading." },
+          { id:"partner",       label:"Proactively seek partnership or acquisition talks", desc:"Approach health platforms before Apple dominates distribution.", score:65,
+            advice:"Entering partnership or acquisition conversations while you have leverage (pre-Apple launch, post-validation) is tactically sound. A telehealth platform, hospital system, or health insurer could provide distribution that Apple can't match. The risk: this signals to your team that you're looking for an exit, not a win." },
+          { id:"attack_price",  label:"Cut price aggressively to create market share gap", desc:"Drop to $149 to maximise units before Apple ships.", score:30,
+            advice:"Price-cutting in response to Apple is almost always a mistake. It signals weakness, trains customers to wait for the next discount, and destroys the margin you need to survive. Apple has $160B in cash — you cannot win a price war against them. Compete on what Apple can't copy: clinical depth and AI accuracy." }
         ]
       },
       {
-        id: "messaging_pivot",
-        question: "How do you adjust your marketing message?",
-        hint: "In a competitive market, a clear, differentiated message is your best weapon.",
-        required: true,
+        id: "messaging_pivot", question: "2. How do you adjust your messaging in response?",
+        hint: "A sharp, differentiated message is your most powerful competitive weapon.", required: true,
         options: [
-          { id:"precision",  label:"'Precision Over Popularity'",      desc:"Position against Apple: medical-grade accuracy vs fashion accessory. Facts-forward." },
-          { id:"ai_coach",   label:"'Your AI Health Coach'",           desc:"Shift to outcomes — not just data, but life-changing insights Apple can't match." },
-          { id:"community",  label:"'Built for Serious Trackers'",     desc:"Community-first message targeting those who outgrew Apple Watch. Insider credibility." },
-          { id:"neutral",    label:"Stay the course, don't react",     desc:"Apple's announcement changes nothing. Continue original launch strategy." }
+          { id:"precision",  label:"'Precision Over Popularity' — accuracy vs fashion", desc:"Medical-grade accuracy vs lifestyle accessory. Facts-forward.", score:90,
+            advice:"This framing is marketing gold. It doesn't attack Apple directly but draws a clear line between 'serious health intelligence' and 'pretty ring that tracks steps.' It's the kind of message that doctors share, athletes quote, and journalists frame as a genuine tech debate — generating organic amplification." },
+          { id:"ai_coach",   label:"'Your AI Health Coach' — outcomes Apple can't deliver", desc:"Move from tracking to actionable health transformation.", score:85,
+            advice:"Outcome-based messaging is harder to commoditise than feature-based messaging. 'Apple Ring tracks your sleep. NOVA Ring tells you exactly why you're exhausted and what to change' is a compelling contrast that doesn't require a direct comparison — but implies one powerfully." },
+          { id:"community",  label:"'Built for Serious Trackers — not the mainstream'", desc:"Insider credibility: this is the ring for people who outgrew Apple.", score:75,
+            advice:"The 'serious user' positioning creates a tribe identity that's deeply motivating. Quantified Self community members, elite athletes, and health optimisers will actively resent being lumped in with mainstream Apple Ring users — and NOVA Ring can be their 'badge of seriousness.' Niche but powerful." },
+          { id:"neutral",    label:"Stay the course — Apple's entry doesn't change our story", desc:"Our segment doesn't overlap significantly with Apple's.", score:38,
+            advice:"'Ignoring' Apple sounds strategic but reads as oblivious to the market. Even if your segments don't overlap perfectly, every tech publication covering Apple Ring will mention NOVA Ring in comparison — and if you have no differentiation narrative ready, those comparisons default to price and brand, both of which you'll lose." }
+        ]
+      },
+      {
+        id: "pricing_response", question: "3. How do you adjust pricing in response to Apple Ring at $299?",
+        hint: "Apple's $299 price creates a new reference point in the market.", required: true,
+        options: [
+          { id:"hold_price",     label:"Hold current price — justify with superior value", desc:"Price integrity + differentiation. Confidence signal.", score:88,
+            advice:"Holding price is the right move if your product genuinely delivers more value — which it does. At $199 vs $299 Apple, you're actually better positioned post-announcement: same quality story, meaningfully lower price. At $249+, holding signals 'we're not afraid of Apple because we're better.'" },
+          { id:"minor_adjust",   label:"Minor reposition: introduce a premium tier above Apple", desc:"Add $349 Pro tier to anchor NOVA Ring as superior.", score:80,
+            advice:"Adding a premium tier above Apple's $299 is a sophisticated anchoring move. 'NOVA Ring $199 / NOVA Ring Pro $349' creates a good-better-best frame where Apple is the 'good' option and your Pro is the gold standard. This is how BMW responded to Mercedes — by going upmarket, not downmarket." },
+          { id:"bundle_response",label:"Launch a 'Compare Honestly' bundle at same price as Apple", desc:"$299 all-inclusive bundle to match Apple's sticker price.", score:65,
+            advice:"Price matching Apple at $299 with a bundle can work if the bundle adds genuine value (1-year sub, accessories, clinical setup). However, this looks reactive and may confuse customers who knew you as the lower-priced option. Execute carefully if you choose this path." },
+          { id:"drop_price",     label:"Drop to $149 — create a 50% price gap vs Apple", desc:"Own the value end of the market. Maximise volume.", score:25,
+            advice:"Dropping below Apple on price is a surrender strategy. You're telling the market that you compete on cost, not quality — which is the one narrative you cannot win against a company with Apple's supply chain. Your COGS is $68; at $149 with subscription you can survive, but it's not a winning position." }
+        ]
+      },
+      {
+        id: "channel_response", question: "4. How do you adjust your marketing channels post-Apple announcement?",
+        hint: "Apple's launch will dominate organic channels. How do you cut through?", required: true,
+        options: [
+          { id:"comparison_content", label:"Commission independent comparison reviews immediately", desc:"Pay 20 YouTubers to do NOVA Ring vs Apple Ring comparisons.", score:90,
+            advice:"The smartest channel move. When Apple Ring ships, comparison videos will be the #1 search query in your category for 3–6 months. Commissioning thorough accuracy comparison reviews before Apple ships — and seeding them for day-of-launch publication — means NOVA Ring appears in every comparison search at exactly the right moment." },
+          { id:"pr_acceleration",    label:"Double PR spend — pitch 'accuracy gap' story now", desc:"Get ahead of Apple Ring reviews with your accuracy narrative.", score:82,
+            advice:"Accelerating PR pre-Apple launch to establish the accuracy narrative is excellent sequencing. If journalists have already written 'NOVA Ring sets clinical accuracy standard' stories before Apple Ring reviews land, those review writers will reference your positioning when noting Apple's accuracy limitations." },
+          { id:"paid_scale",         label:"Scale paid acquisition — ride category awareness wave", desc:"Increase Meta/Google spend to capture Apple-driven interest.", score:55,
+            advice:"Paying to capture Apple-driven search traffic is tactically valid but expensive — CPC for 'health ring' keywords will spike 3–5× during Apple Ring launch week. Unless your LTV/CAC math clearly supports it, wait until the wave subsides and keyword costs normalise in month 2 post-Apple launch." },
+          { id:"community_defence",  label:"Activate your existing users as vocal advocates online", desc:"Your users defend NOVA Ring credibility on Reddit and forums.", score:72,
+            advice:"Community defence is powerful but requires users who are already advocates — meaning high NPS. If your NPS is above 60, activating users to participate in Apple Ring comparison discussions on Reddit, Twitter, and biohacker forums is free, authentic, and highly persuasive to your target audience." }
+        ]
+      },
+      {
+        id: "product_emphasis", question: "5. Which product feature do you emphasise in response?",
+        hint: "Your most defensible technical advantage should become your loudest message.", required: true,
+        options: [
+          { id:"accuracy_data",  label:"Publish biomarker accuracy benchmarks vs all competitors", desc:"47-biomarker accuracy data that Apple cannot match.", score:92,
+            advice:"Data beats marketing every time in a sceptical market. Publishing independently validated accuracy benchmarks (sensitivity, specificity, versus clinical gold standards) is the one asset Apple Ring's marketing team cannot replicate without 2+ years of clinical validation studies. This is your long-term moat — make it public." },
+          { id:"ai_features",    label:"Release AI health coach feature ahead of schedule", desc:"Personalised AI health insights that Apple Ring can't offer.", score:85,
+            advice:"Accelerating your AI roadmap to have visible, demonstrable AI features before Apple Ring ships is an excellent move. If comparison reviews can show a side-by-side: 'Apple Ring shows you your steps. NOVA Ring tells you your steps are lower because your sleep quality dropped 18% this week and here's what to do' — you win every review." },
+          { id:"clinical_partnerships", label:"Announce clinical partnership with hospital system", desc:"'Trusted by [Hospital Name] for patient monitoring.'", score:80,
+            advice:"A clinical partnership announcement adds a layer of credibility that Apple Ring will struggle to match in its first year. Hospital endorsement signals that your device is in a different category — not consumer health gadget, but legitimate clinical tool. This is especially powerful for chronic patient and corporate wellness segments." },
+          { id:"design_refresh",  label:"Announce a premium design variant to match Apple aesthetics", desc:"NOVA Ring in gold/titanium to compete on style.", score:42,
+            advice:"Competing with Apple on design is a losing battle. Apple has 30 years of industrial design leadership, Jonathan Ive's legacy, and the world's most sophisticated manufacturing supply chain. Chasing Apple on aesthetics diverts resources from your genuine competitive advantage (clinical accuracy and AI) to your weakest area." }
+        ]
+      },
+      {
+        id: "partnership_strategy", question: "6. How do you respond with your partnership strategy?",
+        hint: "Partnerships can create distribution moats Apple cannot easily replicate.", required: true,
+        options: [
+          { id:"clinical_partners", label:"Accelerate clinical and healthcare partnerships", desc:"Sign 3 telehealth or hospital pilot agreements within 60 days.", score:88,
+            advice:"Healthcare distribution is Apple's biggest blind spot. Apple Ring will not be integrated into clinical workflows, EHR systems, or telehealth platforms for years — if ever. Signing clinical partnerships now creates a distribution and credibility channel that no amount of Apple marketing can immediately access." },
+          { id:"platform_integration", label:"Integrate with every major health platform (Strava, MyFitnessPal)", desc:"Make NOVA Ring data available everywhere Apple Watch data goes.", score:78,
+            advice:"Platform integration strategy is smart because it makes NOVA Ring compatible with existing user workflows rather than replacing them. If your ring's data flows into Strava, MyFitnessPal, and WHOOP alongside Apple Health, comparison shoppers see NOVA Ring as additive rather than competitive." },
+          { id:"enterprise_push",  label:"Push 5 corporate wellness pilots before Apple Ring ships", desc:"Land enterprise accounts before Apple enters that market.", score:72,
+            advice:"Securing corporate wellness pilots before Apple Ring ships is a smart land-grab. Apple Ring's consumer positioning makes it less attractive to corporate HR buyers who need clinical data, HIPAA compliance, and admin dashboards. Position NOVA Ring as the enterprise-grade solution these buyers need." },
+          { id:"retail_rush",      label:"Secure retail shelf space before Apple dominates retail", desc:"Get into Best Buy and Target before Apple Ring's Q3 launch.", score:55,
+            advice:"Retail shelf space is valuable but limited in impact when Apple's marketing will create enormous demand at launch. Being in Best Buy next to Apple Ring could work in your favour (comparison shopping) but requires strong retail marketing support and premium positioning to avoid being overshadowed." }
+        ]
+      },
+      {
+        id: "internal_priority", question: "7. What is your single internal team priority for the next 60 days?",
+        hint: "Competitive pressure often reveals execution gaps. What must your team focus on?", required: true,
+        options: [
+          { id:"accuracy_proof",  label:"Complete and publish clinical accuracy validation study", desc:"Get the data that proves NOVA Ring's superiority.", score:90,
+            advice:"If the accuracy study isn't published yet, this is your most urgent priority. Without independent validation, your accuracy claims are marketing noise. With it, they become a defensible narrative that 10,000 journalists and reviewers will reference for years. This is the one deliverable that changes everything." },
+          { id:"product_quality", label:"Identify and fix top 10 product issues before Apple ships", desc:"Ship defect-free so reviews can't attack quality.", score:85,
+            advice:"Product quality assurance is critical before Apple's launch creates a comparison standard. The worst timing for a software bug or accuracy complaint is the week Apple Ring ships — every reviewer will use it as a data point. Be flawless going into the competitive moment." },
+          { id:"marketing_content", label:"Create 50-piece content library for launch amplification", desc:"Videos, comparison guides, accuracy data sheets, social assets.", score:72,
+            advice:"A well-prepared content library means your team can respond in hours to any Apple Ring narrative rather than days. Having accuracy comparison PDFs, video scripts, and social templates ready before Apple ships is excellent operational readiness — especially for PR and influencer management." },
+          { id:"sales_training",   label:"Train sales and CS teams on competitive positioning", desc:"Every customer-facing person can handle 'How does this compare to Apple Ring?'", score:65,
+            advice:"Sales and customer success teams who can confidently answer 'Why NOVA Ring over Apple Ring?' become your most valuable conversion asset. This is especially important for B2B sales cycles where prospects will inevitably raise the Apple comparison in every meeting post-announcement." }
         ]
       }
     ],
-    insight: "When a giant enters your category, the worst move is panic-discounting or trying to out-Apple Apple. The best product marketers use competitive entries as a gift: they validate your market, and they always have exploitable weaknesses. Apple Ring's accuracy gap is a real technical limitation — precision instruments require years of clinical validation Apple hasn't done. Own that gap loudly. 'We don't have a trillion dollar brand. We have the most accurate ring ever built.' That's a defensible moat."
+    insight: "Competitive disruption reveals which teams have a genuine strategy versus a plan. The best product marketers treat a competitor's launch as free category validation — and immediately publish the evidence that makes their product the superior choice for anyone who cares about more than brand recognition."
   },
   {
     id: 5,
     name: "Growth & Scale",
-    subtitle: "Your launch worked. Now decide: what does 'winning' look like at scale?",
+    subtitle: "Your launch worked. Now decide: what does winning look like at scale?",
     duration: 30,
-    brief: `<strong>6-Month Results:</strong> Based on your decisions so far, NovaTech has reached its first milestones. You're now raising your Series A and the board wants a clear growth plan.<br><br>
-Your investors are asking: where do you invest your next $5M to maximize ARR?<br><br>
-<strong>Current metrics (simulated based on your choices):</strong><br>
-You'll see your simulated performance below. Now decide your growth vector.`,
-    dataTitle: "Strategic Growth Options — Risk vs Reward Analysis",
+    brief: `<strong>6-Month Review:</strong> NovaTech has survived launch and the Apple Ring disruption. You're raising Series A. The board wants a rigorous growth plan for the next 12 months. Answer 7 decisions that will determine whether NOVA Ring becomes the category leader.`,
+    dataTitle: "Strategic Growth Options — Risk vs Reward",
     tableHeaders: ["Option","Investment","Timeline","Risk","Revenue Upside"],
     tableRows: [
-      ["Double down on core segment","$1.5M","3-6 months","🟢 Low","2–3x existing ARR"],
-      ["Expand to secondary segment","$2M","6-9 months","🟡 Medium","3–5x ARR"],
-      ["New geography (EU/APAC)","$3M","9-18 months","🔴 High","5–10x long-term"],
-      ["Launch premium SKU","$1.5M","4-6 months","🟡 Medium","20–30% ASP uplift"],
-      ["Pivot to enterprise B2B","$2.5M","9-12 months","🟡 Medium","High LTV, slower"]
+      ["Double down on core segment","$1.5M","3–6 months","🟢 Low","2–3× existing ARR"],
+      ["Expand to secondary segment","$2M","6–9 months","🟡 Medium","3–5× ARR"],
+      ["International expansion (EU)","$3M","9–18 months","🔴 High","5–10× long-term"],
+      ["Launch premium SKU","$1.5M","4–6 months","🟡 Medium","20–30% ASP uplift"],
+      ["Enterprise B2B scale","$2.5M","9–12 months","🟡 Medium","High LTV, slower"]
     ],
     decisions: [
       {
-        id: "growth_vector",
-        question: "Where do you invest your Series A growth budget?",
-        hint: "The best growth choice builds on your established strengths and competes where you can win.",
-        required: true,
+        id: "growth_vector", question: "1. Where do you invest your Series A growth budget?",
+        hint: "The best growth choice builds on proven strengths, not on unproven bets.", required: true,
         options: [
-          { id:"core_segment",    label:"Double down on core segment",   desc:"Go deeper with your primary customers — better retention, referral programs, product depth." },
-          { id:"secondary_exp",   label:"Expand to secondary segment",   desc:"Your second segment is warmed up. Invest in activating them with targeted campaigns." },
-          { id:"new_geo",         label:"International expansion",       desc:"Launch in one international market (UK or Singapore). Diversify revenue base." },
-          { id:"premium_sku",     label:"Launch NOVA Ring Pro",          desc:"A premium tier at $199 higher price point, targeting high-WTP customers with advanced features." },
-          { id:"b2b_pivot",       label:"Enterprise B2B pivot",          desc:"Shift primary focus to corporate wellness. More predictable, higher ACV contracts." }
+          { id:"core_segment",  label:"Double down on core segment — go deeper", desc:"Retention, referrals, product depth for your primary customers.", score:88,
+            advice:"The classic Series A playbook and usually the right one. If your core segment has strong NPS (60+) and retention (80%+), doubling down on it is the lowest-risk, highest-ROI growth move. It proves repeatability — the thing investors want most at this stage. Dominate before you expand." },
+          { id:"premium_sku",   label:"Launch NOVA Ring Pro — premium tier", desc:"$349 tier targeting high-WTP users with advanced clinical features.", score:82,
+            advice:"A premium SKU launch makes sense if your NPS data shows a subset of power users who would pay significantly more. It expands ARPU without expanding market scope, and positions NOVA Ring as a product family rather than a single SKU — which strengthens brand and creates upsell economics." },
+          { id:"secondary_exp", label:"Expand to secondary segment with dedicated campaigns", desc:"Activate the second segment you chose in Phase 1.", score:75,
+            advice:"Expanding to your secondary segment is logical if your primary segment retention is strong. The risk: if your primary segment hasn't been fully won yet, splitting attention and budget creates two half-built positions rather than one dominant one. Expand only when your core metrics are healthy." },
+          { id:"b2b_scale",     label:"Scale enterprise B2B — hire 5-person sales team", desc:"Pursue corporate wellness deals of $50K–$500K ACV.", score:70,
+            advice:"B2B scaling dramatically improves revenue predictability and investor confidence — enterprise ARR is valued at 8–12× vs 4–6× for consumer ARR. The challenge: enterprise sales takes 9–18 months to build and your team will need significant onboarding. Hire an enterprise sales leader first, then build the team." },
+          { id:"international",  label:"International expansion — launch in UK and Germany", desc:"Tap European market where health tech adoption is high.", score:60,
+            advice:"International expansion before dominating home market is a common startup mistake. The EU introduces GDPR compliance, local regulatory requirements, currency risk, and logistics complexity — all while your US market may still be fragile. Unless you have specific EU partnerships ready, delay this until year 2." }
         ]
       },
       {
-        id: "retention_strategy",
-        question: "What's your primary retention and loyalty strategy?",
-        hint: "In subscription businesses, retention is the most important metric after initial acquisition.",
-        required: true,
+        id: "retention_strategy", question: "2. What is your primary retention and LTV strategy?",
+        hint: "Subscription businesses live and die by retention. What's your retention engine?", required: true,
         options: [
-          { id:"product_depth",  label:"Product-led: new features monthly", desc:"Ship fast, engage daily active users with new health insights and integrations." },
-          { id:"community",      label:"Community-led: power user program",  desc:"Invest in super-user community (ambassador program, forums, exclusive access)." },
-          { id:"clinical",       label:"Clinical outcomes partnerships",     desc:"Partner with health systems to give NOVA Ring users real clinical value." },
-          { id:"b2b_bundle",     label:"Bundle into employer benefits",      desc:"Embed NOVA Ring in employee health benefits — reduces churn to near-zero." }
+          { id:"clinical_value",  label:"Clinical outcomes partnerships — NOVA Ring in healthcare", desc:"Partner with doctors and health systems to embed clinical value.", score:90,
+            advice:"The highest-retention strategy available. When a customer's doctor recommends they check their NOVA Ring data before their next appointment, churn drops to near zero — because cancelling means losing healthcare continuity, not just a gadget. This also opens insurance reimbursement pathways worth exploring for Phase 5+." },
+          { id:"ai_personalise",  label:"AI personalisation engine — weekly health narratives", desc:"AI-generated personal health story every week based on your data.", score:85,
+            advice:"Personalised AI insights are the ultimate retention hook because the value compounds — the longer you use NOVA Ring, the more the AI understands your baseline and the more valuable the insights become. This creates a switching cost that hardware features alone cannot create." },
+          { id:"community",       label:"Community-led retention — power user ambassador program", desc:"Top 1% of users become paid advocates and beta testers.", score:72,
+            advice:"Community programmes build brand love and generate organic referrals, but they tend to affect the top 5% of users rather than driving retention across your full base. Excellent complementary strategy to AI personalisation — give your most engaged users special access and watch them recruit new customers." },
+          { id:"b2b_lock",        label:"Employer benefits integration — zero churn through HR lock-in", desc:"NOVA Ring embedded in company health benefits.", score:78,
+            advice:"Employer benefits programmes have churn rates below 5% because the company (not the individual) manages the subscription. This is the most structurally powerful retention mechanism — but requires B2B distribution to be already active. If corporate wellness is your secondary segment, accelerate this immediately." }
+        ]
+      },
+      {
+        id: "product_roadmap", question: "3. What is your product roadmap priority for the next 6 months?",
+        hint: "Your roadmap signals to customers and investors what you believe matters most.", required: true,
+        options: [
+          { id:"ai_improvements", label:"AI health insights — 10 new personalised metrics", desc:"Richer AI coaching, predictive health alerts, trend analysis.", score:88,
+            advice:"If AI intelligence is your value prop (the top-scoring Phase 1 choice), your product roadmap must deliver it visibly. Users who experience a genuinely predictive AI health moment — 'NOVA Ring warned me about my stress levels 3 days before I burned out' — become lifetime customers and vocal advocates." },
+          { id:"accuracy_expansion", label:"Expand biomarker accuracy — add glucose estimation", desc:"Non-invasive glucose monitoring is the $10B health prize.", score:85,
+            advice:"Non-invasive glucose monitoring is the most sought-after feature in health wearables — and the one no competitor has cracked reliably. Announcing 'NOVA Ring early glucose estimation' (even in beta) generates enormous media coverage and differentiates you from Apple Ring in one feature announcement." },
+          { id:"integrations",    label:"Platform integrations — connect to 50 health apps", desc:"Make NOVA Ring data available in every health platform.", score:72,
+            advice:"Integration breadth makes NOVA Ring the data hub rather than a siloed device. When your ring's HRV data flows into an athlete's Garmin Connect, a patient's Epic EHR, and a biohacker's Google Fit simultaneously, you become infrastructure — which is very hard to displace." },
+          { id:"hardware_v2",     label:"Announce NOVA Ring Gen 2 hardware", desc:"New form factor, better battery, improved sensors.", score:65,
+            advice:"Hardware version 2 is necessary eventually but risks cannibalising your existing customer base if announced too early. Customers who paid $199 for Gen 1 will delay purchase or feel betrayed by a rapid hardware upgrade. Announce Gen 2 only when Gen 1 sales are tapering naturally." }
+        ]
+      },
+      {
+        id: "hiring_priority", question: "4. What is your Series A hiring priority?",
+        hint: "Series A hiring defines which capabilities you're betting on for the next 18 months.", required: true,
+        options: [
+          { id:"product_marketing", label:"VP of Product Marketing + 3 PMMs", desc:"Build the team that owns positioning, launch, and competitive intelligence.", score:85,
+            advice:"Product marketing is typically the most underhired function at hardware startups — and the most leveraged. A VP of PMM who can own positioning, pricing, competitive strategy, and launch playbooks will compound every dollar you spend on marketing and sales. This is the highest-ROI hiring decision at Series A." },
+          { id:"clinical_team",    label:"Chief Medical Officer + clinical partnerships team", desc:"Build the clinical credibility that locks in the healthcare channel.", score:82,
+            advice:"If clinical accuracy and healthcare partnerships are your moat, hiring a credible Chief Medical Officer transforms your business in three ways: (1) media credibility, (2) hospital and telehealth negotiating leverage, (3) investor confidence in clinical claims. This is the hire that unlocks the healthcare distribution channel." },
+          { id:"engineering",      label:"AI/ML engineering team — 10 engineers", desc:"Build the AI engine that makes your insights proprietary.", score:80,
+            advice:"AI proprietary to NOVA Ring — trained on your own dataset of 47-biomarker health patterns — is a durable technical moat. The more data you collect, the better the model; the better the model, the more users stay; the more users stay, the more data you collect. This flywheel is worth investing in at Series A." },
+          { id:"sales_team",       label:"Enterprise sales team — 5 AEs + 2 SDRs", desc:"Scale B2B revenue with dedicated outbound motion.", score:68,
+            advice:"Enterprise sales hiring makes sense if your B2B pilot data already shows product-market fit (deals closing, renewal rates high). Building a sales team before validating enterprise PMF results in expensive, low-productivity quarters. Validate first, then hire the scale team." }
+        ]
+      },
+      {
+        id: "community_strategy", question: "5. What is your customer community strategy at scale?",
+        hint: "At scale, community becomes a durable, low-cost growth channel.", required: true,
+        options: [
+          { id:"user_generated",   label:"User-generated health insights programme", desc:"Top users share anonymised health discoveries publicly.", score:85,
+            advice:"User-generated health insights create a content flywheel that compounds: every 'I caught my pre-diabetic trend on NOVA Ring' post generates 50–200 organic shares in health communities. Facilitated UGC is more trusted than brand content and costs almost nothing once the programme is running." },
+          { id:"ambassador",       label:"1,000-person paid ambassador programme", desc:"Select power users become brand advocates with $200/mo stipend.", score:78,
+            advice:"A structured ambassador programme is one of the most cost-effective marketing channels in consumer hardware. $200/mo × 1,000 ambassadors = $2.4M/year. If each ambassador drives 5 new customers at $199 ARPU, the programme pays for itself at 12% conversion — a reasonable expectation for engaged advocates." },
+          { id:"research_panel",   label:"Medical advisory board + user research panel", desc:"100 doctors and 500 power users co-create the roadmap.", score:80,
+            advice:"A formal research panel combining clinicians and power users creates two powerful assets: (1) clinical credibility for media and investor narratives, (2) product insights from the most engaged segment of your user base. This investment typically returns through product decisions that dramatically improve retention." },
+          { id:"social_challenge", label:"Viral health challenge campaigns (#NOVAChallenge)", desc:"Monthly health challenges that generate social sharing.", score:55,
+            advice:"Social challenges can generate short-term virality but rarely sustain engagement. The fitness challenge category is extremely competitive and requires significant paid amplification to reach critical mass. Better as a quarterly tactical activity than your primary community strategy." }
+        ]
+      },
+      {
+        id: "series_a_narrative", question: "6. What is your Series A investor narrative?",
+        hint: "Your fundraising narrative must be honest, differentiated, and defensible.", required: true,
+        options: [
+          { id:"category_leader",   label:"'We are becoming the category-defining health ring'", desc:"Frame as the dominant player in a high-growth category.", score:82,
+            advice:"Category leadership narratives work at Series A when supported by data: NPS, market share estimates, and media mentions that back up the claim. 'We have 40% of the clinical health ring market' is compelling — but requires the data to defend it. Build the metric before building the narrative." },
+          { id:"data_moat",         label:"'We have the world's largest clinical biomarker dataset'", desc:"Data flywheel that makes NOVA Ring smarter every day.", score:90,
+            advice:"The strongest possible Series A narrative for a health AI company. A proprietary dataset of 47-biomarker health patterns from 50,000+ users is genuinely unique — Apple, Google, and Oura don't have it at the same clinical depth. Investors understand data moats and value them at 10–15× ARR multiples." },
+          { id:"clinical_bridge",   label:"'We're bridging consumer health and clinical medicine'", desc:"The company that connects wearables to healthcare workflows.", score:85,
+            advice:"This narrative positions NOVA Ring in a massive and underserved market: the gap between consumer health gadgets and clinical healthcare tools. With the right clinical partnerships in place, this story is both differentiated and believable — and it opens strategic investor conversations with hospital systems, insurers, and pharma companies." },
+          { id:"apple_antidote",    label:"'We're what Apple Ring should have been — but isn't'", desc:"Clinical accuracy leader vs Apple's fashion product.", score:68,
+            advice:"Positioning against Apple as a fundraising narrative is attention-grabbing but carries risk: (1) VCs may worry about Apple acquiring the market, (2) it suggests your identity depends on Apple's success or failure, (3) it invites 'what happens if Apple improves accuracy?' as an obvious follow-up question. Better as marketing message than investor pitch." }
+        ]
+      },
+      {
+        id: "north_star_metric", question: "7. What is your 12-month north star metric?",
+        hint: "The north star defines what your team optimises for — choose it carefully.", required: true,
+        options: [
+          { id:"net_revenue_retention", label:"Net Revenue Retention above 115%", desc:"Expansion revenue from upsells exceeds churn losses.", score:95,
+            advice:"NRR above 115% is the single most powerful Series B fundraising metric — it means your existing customer base grows without any new customer acquisition. It proves your pricing model is working (upsells), your product is sticky (low churn), and your community is deepening (referrals). This is the north star that unlocks best-in-class valuations." },
+          { id:"dau_mau",           label:"Daily Active Users / Monthly Active Users above 60%", desc:"Users engage with the app daily, not just occasionally.", score:88,
+            advice:"DAU/MAU above 60% proves your health insights are genuinely useful daily — not just a 'check once a week' device. This metric directly predicts subscription renewal (users who engage daily renew at 95%+ vs 50% for monthly engagers). Building daily habit formation is the key product challenge for health hardware." },
+          { id:"ltv_cac",           label:"LTV/CAC ratio of 5:1 or better", desc:"Every $1 spent acquiring a customer returns $5 in lifetime value.", score:85,
+            advice:"LTV/CAC of 5:1 proves your business model is fundamentally sound and scalable. Investors at Series B will scrutinise this metric above all others — a 5:1 ratio means you can safely press the growth accelerator without burning cash unsustainably. Build to 3:1 first, then optimise toward 5:1." },
+          { id:"revenue",           label:"$5M ARR within 12 months", desc:"Absolute revenue milestone for Series B qualification.", score:65,
+            advice:"ARR milestones matter but they're lagging indicators. $5M ARR with 40% churn and 2:1 LTV/CAC is a weaker business than $3M ARR with 10% churn and 6:1 LTV/CAC. Track ARR alongside quality metrics — and make sure your $5M ARR comes from retained, not just newly acquired customers." }
         ]
       }
     ],
@@ -767,179 +1101,85 @@ You'll see your simulated performance below. Now decide your growth vector.`,
 ];
 
 // ============================================================
-// SCORING ENGINE
+// SCORING ENGINE — option-level scores + per-answer advice
 // ============================================================
+// Phase 3 channel slider uses a separate alignment calculation.
+// All other decisions: look up option.score (0–100).
+// Phase score = average option score × 2  →  max 200 pts.
+
+const CHANNEL_IDEAL = {
+  millennials:  { perf:35, influencer:30, pr:15, content:15, biz:5  },
+  athletes:     { perf:20, influencer:40, pr:15, content:20, biz:5  },
+  chronic:      { perf:20, influencer:10, pr:35, content:25, biz:10 },
+  techAdopters: { perf:25, influencer:25, pr:35, content:10, biz:5  },
+  corporate:    { perf:10, influencer:10, pr:20, content:10, biz:50 }
+};
 
 const SCORING = {
+  computeScore(phaseId, rawDecisions, allPrev) {
+    const phase = PHASES[phaseId - 1];
+    const decisions = {};
 
-  segmentBaseScores: {
-    millennials: 70, athletes: 75, chronic: 65, techAdopters: 85, corporate: 80
-  },
-
-  valuePropFit: {
-    // [valueProp][segment] = 0-50
-    accuracy:     { millennials:30, athletes:48, chronic:50, techAdopters:35, corporate:40 },
-    design:       { millennials:45, athletes:30, chronic:15, techAdopters:40, corporate:32 },
-    comprehensive:{ millennials:40, athletes:44, chronic:38, techAdopters:44, corporate:50 },
-    ai:           { millennials:44, athletes:35, chronic:35, techAdopters:50, corporate:40 },
-    price:        { millennials:36, athletes:18, chronic:28, techAdopters:28, corporate:20 }
-  },
-
-  segmentPairBonus: {
-    // secondary segment that pairs well with primary
-    millennials:  { techAdopters:20, chronic:12, athletes:8,  corporate:4 },
-    athletes:     { techAdopters:18, millennials:14, chronic:10, corporate:6 },
-    chronic:      { corporate:18, millennials:12, techAdopters:10, athletes:8 },
-    techAdopters: { millennials:20, athletes:18, corporate:10, chronic:8 },
-    corporate:    { chronic:18, millennials:10, athletes:8, techAdopters:12 }
-  },
-
-  priceFit: {
-    // [priceId][segment] = 0-80
-    p99:  { millennials:45, athletes:20, chronic:30, techAdopters:35, corporate:15 },
-    p149: { millennials:72, athletes:48, chronic:60, techAdopters:70, corporate:40 },
-    p199: { millennials:60, athletes:75, chronic:70, techAdopters:72, corporate:55 },
-    p249: { millennials:42, athletes:80, chronic:55, techAdopters:58, corporate:65 },
-    p299: { millennials:30, athletes:70, chronic:42, techAdopters:50, corporate:58 }
-  },
-
-  modelFit: {
-    // [model][segment] = 0-80
-    one_time:      { millennials:55, athletes:60, chronic:40, techAdopters:52, corporate:25 },
-    hw_sub:        { millennials:75, athletes:65, chronic:78, techAdopters:70, corporate:55 },
-    premium_bundle:{ millennials:55, athletes:78, chronic:58, techAdopters:72, corporate:60 },
-    b2b_seat:      { millennials:20, athletes:25, chronic:45, techAdopters:25, corporate:80 }
-  },
-
-  launchOfferScores: {
-    standard:       70,
-    early_bird:     55,  // damages price integrity
-    premium_bundle: 80,
-    influencer:     65
-  },
-
-  channelIdeal: {
-    // ideal % allocation per segment: [perf, influencer, pr, content, biz]
-    millennials:  { perf:35, influencer:30, pr:15, content:15, biz:5  },
-    athletes:     { perf:20, influencer:40, pr:15, content:20, biz:5  },
-    chronic:      { perf:20, influencer:10, pr:35, content:25, biz:10 },
-    techAdopters: { perf:25, influencer:25, pr:35, content:10, biz:5  },
-    corporate:    { perf:10, influencer:10, pr:20, content:10, biz:50 }
-  },
-
-  partnerFit: {
-    amazon:    { millennials:65, athletes:55, chronic:50, techAdopters:60, corporate:30 },
-    bestbuy:   { millennials:55, athletes:50, chronic:40, techAdopters:80, corporate:35 },
-    peloton:   { millennials:50, athletes:82, chronic:40, techAdopters:60, corporate:45 },
-    telehealth:{ millennials:40, athletes:35, chronic:85, techAdopters:40, corporate:60 },
-    corporate: { millennials:25, athletes:25, chronic:55, techAdopters:30, corporate:90 }
-  },
-
-  compResponseScores: {
-    differentiate: 90, attack_price: 45, partner: 70, niche_down: 65
-  },
-  messagingScores: {
-    precision: 85, ai_coach: 80, community: 70, neutral: 40
-  },
-
-  growthVectorFit: (primarySeg, choice) => {
-    const matrix = {
-      core_segment:  { millennials:80, athletes:80, chronic:75, techAdopters:80, corporate:75 },
-      secondary_exp: { millennials:70, athletes:75, chronic:68, techAdopters:78, corporate:70 },
-      new_geo:       { millennials:55, athletes:60, chronic:50, techAdopters:65, corporate:58 },
-      premium_sku:   { millennials:60, athletes:80, chronic:55, techAdopters:75, corporate:65 },
-      b2b_pivot:     { millennials:45, athletes:50, chronic:70, techAdopters:55, corporate:90 }
-    };
-    return (matrix[choice] && matrix[choice][primarySeg]) || 60;
-  },
-
-  retentionScores: {
-    product_depth: 80, community: 75, clinical: 85, b2b_bundle: 90
-  },
-
-  scorePhase1(d) {
-    const seg = d.primary_segment;
-    const base  = (SCORING.segmentBaseScores[seg] || 60);
-    const vpFit = (SCORING.valuePropFit[d.value_prop] || {})[seg] || 0;
-    const pairBonus = ((SCORING.segmentPairBonus[seg] || {})[d.secondary_segment] || 0);
-    const raw = base + vpFit + pairBonus;  // max ~80+50+20=150
-    const total = Math.round(Math.min(200, raw * 200 / 150));
-    const breakdown = [
-      { label:"Segment opportunity",         pts: Math.round(base * 200/150),  max:107 },
-      { label:"Value prop ↔ segment fit",    pts: Math.round(vpFit * 200/150), max:67  },
-      { label:"Segment synergy bonus",       pts: Math.round(pairBonus * 200/150), max:27 }
-    ];
-    return { total, breakdown };
-  },
-
-  scorePhase2(d, prev) {
-    const seg = (prev.primary_segment) || 'techAdopters';
-    const priceScore = (SCORING.priceFit[d.price_point] || {})[seg] || 40;
-    const modelScore = (SCORING.modelFit[d.pricing_model] || {})[seg] || 40;
-    const offerScore = SCORING.launchOfferScores[d.launch_offer] || 50;
-    const raw = priceScore + modelScore + offerScore; // max 80+80+80=240
-    const total = Math.round(Math.min(200, raw * 200 / 240));
-    const breakdown = [
-      { label:"Price ↔ segment WTP fit",    pts: Math.round(priceScore*200/240), max:67 },
-      { label:"Pricing model quality",       pts: Math.round(modelScore*200/240), max:67 },
-      { label:"Launch offer effectiveness",  pts: Math.round(offerScore*200/240), max:67 }
-    ];
-    return { total, breakdown };
-  },
-
-  scorePhase3(d, prev) {
-    const seg = (prev.primary_segment) || 'techAdopters';
-    const ideal = SCORING.channelIdeal[seg] || SCORING.channelIdeal.techAdopters;
-    const alloc = d.channel_alloc || { perf:20, influencer:20, pr:20, content:20, biz:20 };
-    // Compute how well alloc matches ideal (each channel: deviation penalty)
-    let channelScore = 100;
-    ['perf','influencer','pr','content','biz'].forEach(ch => {
-      const dev = Math.abs((alloc[ch] || 0) - (ideal[ch] || 0));
-      channelScore -= dev * 0.6; // up to 100 pts
+    // Normalise: collapse channel_alloc_* keys into channel_alloc object
+    Object.entries(rawDecisions).forEach(([k, v]) => {
+      if (k.startsWith('channel_alloc_')) {
+        if (!decisions.channel_alloc) decisions.channel_alloc = {};
+        decisions.channel_alloc[k.replace('channel_alloc_', '')] = parseInt(v) || 0;
+      } else {
+        decisions[k] = v;
+      }
     });
-    channelScore = Math.max(0, Math.round(channelScore));
-    const partnerScore = (SCORING.partnerFit[d.launch_partner] || {})[seg] || 40;
-    const total = Math.round(Math.min(200, channelScore + partnerScore));
-    const breakdown = [
-      { label:"Channel mix alignment to segment", pts: channelScore, max:100 },
-      { label:"Launch partner fit",               pts: Math.round(partnerScore), max:100 }
-    ];
-    return { total, breakdown };
-  },
 
-  scorePhase4(d) {
-    const resp = SCORING.compResponseScores[d.competitive_response] || 50;
-    const msg  = SCORING.messagingScores[d.messaging_pivot] || 50;
-    const total = Math.round(Math.min(200, resp + msg));
-    const breakdown = [
-      { label:"Competitive response quality", pts: resp, max:100 },
-      { label:"Messaging pivot effectiveness",pts: msg,  max:100 }
-    ];
-    return { total, breakdown };
-  },
+    let totalScore = 0;
+    let maxScore   = 0;
+    const breakdown = [];
+    const advice    = [];
 
-  scorePhase5(d, prev) {
-    const seg = (prev.primary_segment) || 'techAdopters';
-    const growthScore  = SCORING.growthVectorFit(seg, d.growth_vector);
-    const retentionScore = SCORING.retentionScores[d.retention_strategy] || 60;
-    const total = Math.round(Math.min(200, growthScore + retentionScore));
-    const breakdown = [
-      { label:"Growth vector strategic fit",  pts: growthScore,    max:100 },
-      { label:"Retention strategy quality",   pts: retentionScore, max:100 }
-    ];
-    return { total, breakdown };
-  },
+    phase.decisions.forEach(dec => {
+      if (dec.type === 'sliders') {
+        // Channel allocation: compare to ideal for primary segment
+        const seg   = (allPrev && allPrev.primary_segment) || 'techAdopters';
+        const ideal = CHANNEL_IDEAL[seg] || CHANNEL_IDEAL.techAdopters;
+        const alloc = decisions.channel_alloc || {};
+        let channelScore = 100;
+        ['perf','influencer','pr','content','biz'].forEach(ch => {
+          const dev = Math.abs((alloc[ch] || 0) - (ideal[ch] || 0));
+          channelScore -= dev * 0.7;
+        });
+        channelScore = Math.max(10, Math.round(channelScore));
+        totalScore += channelScore;
+        maxScore   += 100;
+        const pct = Math.round((alloc.perf||0)) + '% ads / ' + Math.round((alloc.influencer||0)) + '% influencer / ' + Math.round((alloc.pr||0)) + '% PR';
+        breakdown.push({ label: dec.question, chosen: pct, pts: channelScore, max: 100 });
+        const idealDesc = Object.entries(ideal).map(([k,v])=>v+'% '+k).join(', ');
+        advice.push({
+          question: dec.question,
+          chosen: 'Your allocation: ' + pct,
+          pts: channelScore,
+          text: channelScore >= 80
+            ? `Great channel alignment for your segment. Ideal split is roughly: ${idealDesc}. Your allocation closely matched this.`
+            : channelScore >= 55
+            ? `Reasonable allocation but some mismatches vs the ideal for your segment (${idealDesc}). Rebalancing toward your segment's strongest channels would lift results.`
+            : `Significant channel mismatch. For your chosen segment the ideal is: ${idealDesc}. Misaligned channel spend is one of the biggest drivers of wasted marketing budget — the customer simply isn't there.`
+        });
+      } else {
+        const chosen  = decisions[dec.id];
+        const opt     = (dec.options || []).find(o => o.id === chosen);
+        const score   = opt ? (opt.score || 50) : 0;
+        totalScore   += score;
+        maxScore     += 100;
+        breakdown.push({ label: dec.question, chosen: opt ? opt.label : '—', pts: score, max: 100 });
+        advice.push({
+          question: dec.question,
+          chosen: opt ? opt.label : '—',
+          pts: score,
+          text: opt ? (opt.advice || 'No advice available for this choice.') : 'No answer recorded.'
+        });
+      }
+    });
 
-  computeScore(phaseId, decisions, allPrevDecisions) {
-    const prev = allPrevDecisions || {};
-    switch(phaseId) {
-      case 1: return SCORING.scorePhase1(decisions);
-      case 2: return SCORING.scorePhase2(decisions, prev);
-      case 3: return SCORING.scorePhase3(decisions, prev);
-      case 4: return SCORING.scorePhase4(decisions);
-      case 5: return SCORING.scorePhase5(decisions, prev);
-      default: return { total: 100, breakdown: [] };
-    }
+    const total = maxScore > 0 ? Math.round(Math.min(200, (totalScore / maxScore) * 200)) : 0;
+    return { total, breakdown, advice };
   }
 };
 
@@ -1158,9 +1398,16 @@ function listenForGameStart() {
       if (APP.mode === 'team') loadTeamPhase(phase);
     }
   });
+  // Sync own scores (including breakdown & advice) from Firebase so advice cards work
+  dbOn(`games/${APP.gameCode}/scores/${APP.teamId}`, (scoreData) => {
+    if (scoreData && typeof scoreData === 'object') {
+      APP.teamScores[APP.teamId] = scoreData;
+    }
+  });
   dbOn(`games/${APP.gameCode}/resultsPhase`, (rPhase) => {
     if (rPhase > 0 && APP.mode === 'team') {
-      showTeamResults(rPhase);
+      // Give Firebase a moment to sync scores before rendering
+      setTimeout(() => showTeamResults(rPhase), 400);
     }
   });
 }
@@ -1288,9 +1535,12 @@ function scoreAndSaveTeam(teamId, phaseNum, rawDecisions) {
 
   if (!APP.teamScores[teamId]) APP.teamScores[teamId] = { total: 0 };
   APP.teamScores[teamId][phaseNum] = result.total;
+  // Only sum numeric phase keys to avoid summing breakdown/advice objects
   APP.teamScores[teamId].total = Object.keys(APP.teamScores[teamId])
-    .filter(k => k !== 'total').reduce((s, k) => s + APP.teamScores[teamId][k], 0);
+    .filter(k => /^\d+$/.test(k))
+    .reduce((s, k) => s + (parseInt(APP.teamScores[teamId][k]) || 0), 0);
   APP.teamScores[teamId].breakdown = result.breakdown;
+  APP.teamScores[teamId].advice = result.advice || [];
 
   if (APP.db) {
     dbUpdate(`games/${APP.gameCode}/scores/${teamId}`, APP.teamScores[teamId]);
@@ -1555,16 +1805,49 @@ function showTeamResults(phaseNum) {
   const myScores = APP.teamScores[APP.teamId] || {};
   const phaseScore = myScores[phaseNum] || 0;
   const total = myScores.total || 0;
-  const breakdown = myScores.breakdown || [];
+  const adviceList = myScores.advice || [];
+  const breakdown  = myScores.breakdown || [];
 
   document.getElementById('team-phase-score').textContent = phaseScore;
   document.getElementById('team-total-score').textContent = total + ' pts total';
   const bar = document.getElementById('team-phase-score-bar');
   setTimeout(() => { if(bar) bar.style.width = (phaseScore/2)+'%'; }, 100);
 
-  // Decision breakdown
+  // Advice cards — one per question (7 per phase)
   const bdEl = document.getElementById('team-decision-breakdown');
-  if (breakdown.length) {
+  if (adviceList.length) {
+    bdEl.innerHTML = adviceList.map((a, i) => {
+      const pct  = Math.round((a.pts / 100) * 100);
+      const color = a.pts >= 80 ? '#00c9a7' : a.pts >= 55 ? '#ffaa40' : '#ff6464';
+      const icon  = a.pts >= 80 ? '✅' : a.pts >= 55 ? '⚡' : '❌';
+      return `
+      <div style="margin-bottom:16px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);">
+        <!-- Question header -->
+        <div style="padding:12px 16px 10px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.8px;">Q${i+1}</span>
+          <span style="font-size:12px;font-weight:700;color:${color};">${a.pts} / 100 pts</span>
+        </div>
+        <!-- Question text -->
+        <div style="padding:12px 16px 6px;">
+          <p style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:6px;">${a.question}</p>
+          <!-- Score bar -->
+          <div class="progress-bar" style="margin-bottom:8px;">
+            <div class="progress-fill" style="width:${pct}%;background:${color};"></div>
+          </div>
+          <!-- Chosen answer -->
+          <p style="font-size:13px;color:rgba(255,255,255,0.85);margin-bottom:8px;">
+            ${icon} <strong>Your answer:</strong> ${a.chosen}
+          </p>
+          <!-- Advice text -->
+          <div style="background:rgba(0,0,0,0.25);border-radius:10px;padding:10px 14px;">
+            <p style="font-size:13px;line-height:1.65;color:rgba(255,255,255,0.75);">💡 ${a.text}</p>
+          </div>
+        </div>
+        <div style="height:10px;"></div>
+      </div>`;
+    }).join('');
+  } else if (breakdown.length) {
+    // Fallback: plain progress bars if advice not available
     bdEl.innerHTML = breakdown.map(b => `
       <div style="margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
@@ -1627,7 +1910,11 @@ function renderLeaderboard(containerId, final = false) {
   const el = document.getElementById(containerId);
   if (!el) return;
   const teams = Object.entries(APP.teamList)
-    .map(([id, name]) => ({ id, name, scores: APP.teamScores[id] || {}, total: (APP.teamScores[id]||{}).total || 0 }))
+    .map(([id, name]) => ({
+      id, name,
+      scores: APP.teamScores[id] || {},
+      total: parseInt(APP.teamScores[id] && APP.teamScores[id].total) || 0
+    }))
     .sort((a,b) => b.total - a.total);
 
   if (!teams.length) { el.innerHTML = '<p style="color:rgba(255,255,255,0.3);font-size:14px;">No scores yet</p>'; return; }
