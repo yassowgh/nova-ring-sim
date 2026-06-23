@@ -332,6 +332,15 @@
       <h1 style="font-size:24px;font-weight:800;">Join the Game</h1>
       <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-top:4px;">Enter your game code and team name</p>
     </div>
+    <!-- Rejoin banner — shown only when a saved session exists -->
+    <div id="rejoin-banner" style="display:none;margin-bottom:20px;border-radius:14px;border:1.5px solid rgba(108,99,255,0.5);background:rgba(108,99,255,0.1);padding:16px 18px;">
+      <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:rgba(255,255,255,0.45);margin-bottom:6px;">Previous Session Found</p>
+      <p id="rejoin-info" style="font-size:14px;color:rgba(255,255,255,0.85);margin-bottom:12px;"></p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" style="flex:1;font-size:13px;padding:10px;" onclick="rejoinGame()">↩ Rejoin Game</button>
+        <button class="btn btn-secondary" style="font-size:13px;padding:10px;" onclick="clearSavedSession()">Clear</button>
+      </div>
+    </div>
     <div class="card" style="padding:28px;display:flex;flex-direction:column;gap:18px;">
       <div>
         <label>Game Code</label>
@@ -474,7 +483,7 @@
     <div style="text-align:center;margin-bottom:36px;">
       <div style="font-size:52px;margin-bottom:10px;">🏆</div>
       <h1 style="font-size:32px;font-weight:800;">Simulation Complete!</h1>
-      <p style="color:rgba(255,255,255,0.5);margin-top:6px;">NOVA Ring — Product Marketing Challenge</p>
+      <p style="color:rgba(255,255,255,0.5);margin-top:6px;">NOVA VI Ring — Product Marketing Challenge</p>
     </div>
 
     <div id="final-leaderboard" style="margin-bottom:32px;"></div>
@@ -1547,6 +1556,7 @@ function joinGame() {
   if (APP.db) {
     dbSet(`games/${code}/teams/${APP.teamId}`, name)
       .then(() => {
+        saveSession();
         document.getElementById('lobby-my-team-name').textContent = name;
         showScreen('screen-team-lobby');
         listenForGameStart();
@@ -1562,10 +1572,42 @@ function joinGame() {
 
 function listenForGameStart() {
   if (!APP.db) return; // demo: host calls startGame() directly
+
+  // ── Snapshot current game state immediately (handles reconnects mid-game) ──
+  APP.db.ref(`games/${APP.gameCode}`).once('value', snap => {
+    const game = snap.val();
+    if (!game) return;
+    const status       = game.status       || 'lobby';
+    const currentPhase = game.currentPhase || 0;
+    const resultsPhase = game.resultsPhase || 0;
+    const submitted    = game.submissions && game.submissions[APP.teamId];
+
+    if (status === 'phase' && currentPhase > 0) {
+      APP.currentPhase = currentPhase;
+      // If this team already submitted the current phase, show results if available
+      if (submitted && resultsPhase === currentPhase) {
+        setTimeout(() => showTeamResults(resultsPhase), 400);
+      } else {
+        loadTeamPhase(currentPhase);
+      }
+    } else if (status === 'finished') {
+      // Game already over — go to lobby or show final state
+      showScreen('screen-team-lobby');
+      document.getElementById('lobby-my-team-name').textContent = APP.teamName || '';
+      toast('The game has ended. Check the leaderboard on the host screen.');
+    }
+    // status === 'lobby' → already on lobby screen, nothing extra needed
+  });
+
+  // ── Ongoing listeners ──
   dbOn(`games/${APP.gameCode}/status`, (status) => {
     if (status === 'phase') {
       APP.db.ref(`games/${APP.gameCode}/currentPhase`).once('value', snap => {
-        loadTeamPhase(snap.val());
+        const phase = snap.val();
+        if (phase > 0 && APP.currentPhase !== phase) {
+          APP.currentPhase = phase;
+          loadTeamPhase(phase);
+        }
       });
     }
   });
@@ -2214,6 +2256,84 @@ function toast(msg, duration=3000) {
 }
 
 // ============================================================
+// SESSION PERSISTENCE — rejoin after disconnect
+// ============================================================
+function saveSession() {
+  try {
+    const fbConfig = APP.firebase ? APP.firebase.options : null;
+    localStorage.setItem('nova_session', JSON.stringify({
+      gameCode: APP.gameCode,
+      teamId:   APP.teamId,
+      teamName: APP.teamName,
+      fbConfig: fbConfig
+    }));
+  } catch(e) { /* storage unavailable */ }
+}
+
+function clearSavedSession() {
+  try { localStorage.removeItem('nova_session'); } catch(e) {}
+  document.getElementById('rejoin-banner').style.display = 'none';
+}
+
+function checkSavedSession() {
+  try {
+    const raw = localStorage.getItem('nova_session');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (!s.gameCode || !s.teamId || !s.teamName) return;
+    const banner = document.getElementById('rejoin-banner');
+    const info   = document.getElementById('rejoin-info');
+    if (banner && info) {
+      info.textContent = `Team "${s.teamName}" · Game ${s.gameCode}`;
+      banner.style.display = 'block';
+    }
+  } catch(e) {}
+}
+
+function rejoinGame() {
+  try {
+    const raw = localStorage.getItem('nova_session');
+    if (!raw) { toast('No saved session found.'); return; }
+    const s = JSON.parse(raw);
+    if (!s.gameCode || !s.teamId || !s.teamName) { toast('Saved session is invalid.'); return; }
+
+    APP.mode     = 'team';
+    APP.gameCode = s.gameCode;
+    APP.teamId   = s.teamId;
+    APP.teamName = s.teamName;
+
+    // Re-init Firebase if needed and config is saved
+    if (!APP.db && s.fbConfig) {
+      try {
+        if (firebase.apps.length) firebase.app().delete();
+        APP.firebase = firebase.initializeApp(s.fbConfig);
+        APP.db = firebase.database();
+      } catch(e) { console.warn('Firebase re-init failed on rejoin:', e); }
+    }
+
+    if (!APP.db) {
+      toast('Cannot reconnect — Firebase not available.');
+      return;
+    }
+
+    // Re-register team name in Firebase (in case it was cleaned up)
+    dbSet(`games/${s.gameCode}/teams/${s.teamId}`, s.teamName)
+      .catch(() => {}); // non-fatal
+
+    // Show lobby screen while we figure out game state
+    document.getElementById('lobby-my-team-name').textContent = s.teamName;
+    showScreen('screen-team-lobby');
+    toast('Reconnecting…', 2000);
+
+    // listenForGameStart will snapshot current state and jump to the right screen
+    listenForGameStart();
+  } catch(e) {
+    toast('Could not rejoin. Try joining manually.');
+    console.error(e);
+  }
+}
+
+// ============================================================
 // AUTO-JOIN VIA URL PARAM
 // ============================================================
 (function() {
@@ -2238,6 +2358,9 @@ function toast(msg, duration=3000) {
     const inp = document.getElementById('join-code-input');
     if (inp) inp.value = joinCode.toUpperCase();
   }
+
+  // Check for a saved session and show rejoin banner if found
+  checkSavedSession();
 })();
 
 </script>
